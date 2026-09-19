@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Bonapinta · Sistema Visual</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', system-ui, sans-serif; background: #e8e6df; color: #0b0e0c; -webkit-font-smoothing: antialiased; padding: 24px; }
+@media (max-width: 900px) { body { padding: 12px; } }
+
+.page-head { max-width: 1600px; margin: 0 auto 24px; }
+.page-head h1 { font-family: 'Space Grotesk', sans-serif; font-weight: 500; font-size: clamp(36px, 5vw, 64px); letter-spacing: -0.03em; line-height: 0.95; }
+.page-head p { font-size: 14px; color: #4a544d; margin-top: 10px; max-width: 700px; line-height: 1.5; }
+.eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #6b7369; margin-bottom: 14px; }
+
+.directions { max-width: 1600px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 1100px) { .directions { grid-template-columns: 1fr; } }
+
+/* direction panel base */
+.dir { border-radius: 24px; overflow: hidden; padding: 0; }
+.dir-head { padding: 22px 24px 18px; border-bottom: 1px solid; }
+.dir-tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; }
+.dir-title { font-size: 32px; line-height: 1; letter-spacing: -0.02em; font-weight: 500; margin: 6px 0 8px; }
+.dir-sub { font-size: 13px; line-height: 1.5; opacity: 0.8; }
+
+.section { padding: 22px 24px; border-bottom: 1px solid; }
+.section:last-child { border-bottom: none; }
+.section-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 14px; opacity: 0.6; }
+
+/* ═══════════════════ DIRECTION A — COURT ═══════════════════ */
+.A {
+  --bg:        #f5f3ee;
+  --paper:     #fafaf7;
+  --ink:       #0b0e0c;
+  --ink-2:     #4a544d;
+  --ink-soft:  #6b7369;
+  --line:      #d9d7cf;
+  --line-soft: #e8e6df;
+  --court:     oklch(62% 0.17 148);
+  --court-deep:oklch(48% 0.15 148);
+  --court-dim: oklch(28% 0.07 148);
+  --court-soft:oklch(94% 0.04 148);
+  --clay:      #c9a227;
+  --clay-dark: #1a1200;
+  --amber:     #b45309;
+  --crimson:   #9b1f1f;
+  --ok:        #166534;
+  --display:   'Space Grotesk', sans-serif;
+  --mono:      'JetBrains Mono', monospace;
+  background: var(--bg); color: var(--ink);
+}
+.A .dir-head, .A .section { border-color: var(--line); }
+.A .dir-tag { color: var(--court-deep); }
+.A .dir-title { font-family: var(--display); }
+
+/* ═══════════════════ DIRECTION B — CLAY COURT ═══════════════════ */
+.B {
+  --bg:        #1b1612;
+  --paper:     #221c17;
+  --ink:       #f3ece1;
+  --ink-2:     #a8a095;
+  --ink-soft:  #6e6659;
+  --line:      #302720;
+  --line-soft: #282019;
+  --accent:    #e8532a;     /* clay terracotta */
+  --accent-d:  #b33d1e;
+  --accent-s:  #3a1d12;
+  --lime:      #d4f046;     /* electric court line */
+  --lime-d:    #9ebd1f;
+  --cream:     #f3ece1;
+  --display:   'Fraunces', serif;
+  --mono:      'JetBrains Mono', monospace;
+  background: var(--bg); color: var(--ink);
+}
+.B .dir-head, .B .section { border-color: var(--line); }
+.B .dir-tag { color: var(--accent); }
+.B .dir-title { font-family: var(--display); font-style: italic; }
+
+/* ═══════════════════ swatches ═══════════════════ */
+.swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+@media (max-width: 700px) { .swatches { grid-template-columns: repeat(3, 1fr); } }
+.sw { aspect-ratio: 1; border-radius: 10px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; }
+.sw-name { text-transform: uppercase; opacity: 0.8; }
+.sw-val { font-size: 10px; opacity: 0.6; }
+
+/* ═══════════════════ type scale ═══════════════════ */
+.type-scale > * + * { margin-top: 12px; }
+.ts-row { display: flex; gap: 14px; align-items: baseline; padding-bottom: 10px; border-bottom: 1px dashed; border-color: var(--line); }
+.ts-meta { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.5; width: 72px; flex-shrink: 0; }
+.A .ts-hero { font-family: var(--display); font-weight: 500; font-size: 56px; line-height: 0.95; letter-spacing: -0.03em; }
+.A .ts-h1   { font-family: var(--display); font-weight: 500; font-size: 32px; line-height: 1.05; letter-spacing: -0.02em; }
+.A .ts-h2   { font-family: var(--display); font-weight: 500; font-size: 20px; letter-spacing: -0.01em; }
+.A .ts-body { font-family: 'Inter'; font-size: 14px; line-height: 1.5; }
+.A .ts-mono { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+.B .ts-hero { font-family: var(--display); font-weight: 500; font-style: italic; font-size: 56px; line-height: 0.95; letter-spacing: -0.02em; }
+.B .ts-h1   { font-family: var(--display); font-weight: 500; font-style: italic; font-size: 32px; line-height: 1.05; }
+.B .ts-h2   { font-family: var(--display); font-weight: 500; font-size: 20px; }
+.B .ts-body { font-family: 'Inter'; font-size: 14px; line-height: 1.5; }
+.B .ts-mono { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; }
+
+/* ═══════════════════ components ═══════════════════ */
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { border: none; padding: 11px 18px; border-radius: 10px; font-size: 13px; font-weight: 600; font-family: 'Inter'; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.A .btn-primary { background: var(--court); color: var(--ink); }
+.A .btn-dark    { background: var(--ink); color: var(--bg); }
+.A .btn-ghost   { background: transparent; border: 1px solid var(--line); color: var(--ink); }
+.A .btn-danger  { background: var(--crimson); color: #fff; }
+.B .btn-primary { background: var(--accent); color: var(--cream); }
+.B .btn-dark    { background: var(--lime); color: var(--bg); }
+.B .btn-ghost   { background: transparent; border: 1px solid var(--line); color: var(--ink); }
+.B .btn-danger  { background: #6b1818; color: var(--cream); }
+
+.pill-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 9px; border-radius: 6px; }
+.pill .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.A .pill.neutral  { background: #e3e1da; color: #4a544d; }
+.A .pill.propose  { background: #fef3c7; color: #b45309; }
+.A .pill.confirm  { background: #fee4e4; color: #9b1f1f; }
+.A .pill.done     { background: #dcfce7; color: #166534; }
+.B .pill.neutral  { background: #2c231c; color: var(--ink-2); }
+.B .pill.propose  { background: #3d2818; color: #e8a23a; }
+.B .pill.confirm  { background: var(--accent-s); color: var(--accent); }
+.B .pill.done     { background: #1f2a12; color: var(--lime); }
+
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 7px 14px; border-radius: 999px; font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'Inter'; }
+.A .chip       { background: var(--paper); border: 1px solid var(--line); color: var(--ink-2); }
+.A .chip.on    { background: var(--ink); color: var(--bg); }
+.B .chip       { background: var(--paper); border: 1px solid var(--line); color: var(--ink-2); }
+.B .chip.on    { background: var(--lime); color: var(--bg); border-color: var(--lime); }
+
+/* ═══════════════════ cromo ═══════════════════ */
+.cromos-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+.cromo { border-radius: 12px; overflow: hidden; position: relative; }
+.cromo-strip { padding: 3px 8px; display: flex; justify-content: space-between; align-items: center; font-family: var(--display); font-weight: 700; font-size: 9px; letter-spacing: 0.08em; }
+.cromo-body { height: 90px; display: grid; place-items: center; position: relative; }
+.cromo-initials { font-family: var(--display); font-weight: 700; font-size: 30px; letter-spacing: 0.02em; opacity: 0.9; }
+.cromo-foot { padding: 7px 10px 9px; }
+.cromo-first { font-family: var(--display); font-weight: 600; font-size: 13px; }
+.cromo-last { font-size: 10px; margin-top: 1px; opacity: 0.7; }
+
+/* A cromo — classic gold */
+.A .cromo { background: #1a1200; border: 1px solid #c9a227; }
+.A .cromo-strip { background: #c9a227; color: #1a1200; }
+.A .cromo-body { background: radial-gradient(circle at 30% 20%, rgba(201,162,39,0.15), transparent 60%), #0f1a12; }
+.A .cromo-initials { color: #c9a227; }
+.A .cromo-first { color: #f5f3ee; }
+.A .cromo-last { color: #7a6020; }
+.A .cromo.me { border-color: var(--court); }
+.A .cromo.me .cromo-strip { background: var(--court); color: #0b0e0c; }
+.A .cromo.me .cromo-initials { color: var(--court); }
+
+/* B cromo — terracotta modern */
+.B .cromo { background: #0f0c0a; border: 1px solid var(--accent); }
+.B .cromo-strip { background: var(--accent); color: var(--cream); }
+.B .cromo-body {
+  background:
+    repeating-linear-gradient(45deg, rgba(232,83,42,0.06) 0 2px, transparent 2px 6px),
+    radial-gradient(circle at 30% 20%, rgba(232,83,42,0.2), transparent 60%),
+    #1a0f0a;
+}
+.B .cromo-initials { color: var(--accent); }
+.B .cromo-first { color: var(--cream); }
+.B .cromo-last { color: #8a7060; }
+.B .cromo.me { border-color: var(--lime); }
+.B .cromo.me .cromo-strip { background: var(--lime); color: #0f0c0a; }
+.B .cromo.me .cromo-initials { color: var(--lime); }
+
+/* ═══════════════════ mini phone mockups ═══════════════════ */
+.phones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 700px) { .phones { grid-template-columns: 1fr; } }
+.phone { border-radius: 28px; padding: 8px; overflow: hidden; aspect-ratio: 9/17.5; display: flex; flex-direction: column; }
+.A .phone { background: var(--ink); }
+.B .phone { background: #000; }
+.screen { background: var(--bg); border-radius: 22px; flex: 1; overflow: hidden; position: relative; display: flex; flex-direction: column; }
+.statusbar { display: flex; justify-content: space-between; padding: 10px 16px 4px; font-family: var(--mono); font-size: 10px; font-weight: 600; }
+.A .statusbar { color: var(--ink); }
+.B .statusbar { color: var(--ink); }
+.screen-body { padding: 8px 14px 56px; flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 10px; }
+.phone-label { margin-top: 10px; text-align: center; font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.6; }
+
+/* bottom tab bar */
+.tabbar { position: absolute; bottom: 0; left: 0; right: 0; display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 8px 10px; gap: 2px; }
+.A .tabbar { background: var(--paper); border-top: 1px solid var(--line); }
+.B .tabbar { background: var(--paper); border-top: 1px solid var(--line); }
+.tab-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 10px; }
+.tab-icon { width: 18px; height: 18px; }
+.tab-label { font-size: 8.5px; font-weight: 500; font-family: 'Inter'; }
+.A .tab-item { color: var(--ink-soft); }
+.A .tab-item.on { color: var(--court-deep); }
+.A .tab-item.on .tab-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--court); margin-bottom: -4px; }
+.B .tab-item { color: var(--ink-2); }
+.B .tab-item.on { color: var(--lime); }
+.B .tab-item.on .tab-dot { width: 20px; height: 3px; border-radius: 2px; background: var(--lime); margin-bottom: -3px; }
+
+/* ═══════════════════ INICIO screen ═══════════════════ */
+.hero-wrap { border-radius: 14px; padding: 12px 14px; }
+.A .hero-wrap { background: var(--ink); color: var(--bg); }
+.B .hero-wrap {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-d) 100%);
+  color: var(--cream);
+}
+.hero-eyebrow { font-family: var(--mono); font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.7; }
+.hero-title { font-family: var(--display); font-weight: 500; font-size: 22px; letter-spacing: -0.02em; line-height: 1; margin-top: 4px; }
+.A .hero-title em { font-style: normal; color: var(--court); font-weight: 600; }
+.B .hero-title { font-style: italic; }
+.B .hero-title em { font-style: normal; color: var(--lime); font-weight: 600; }
+.hero-stats { display: flex; gap: 14px; margin-top: 10px; }
+.hero-stat-n { font-family: var(--display); font-size: 22px; font-weight: 600; line-height: 1; letter-spacing: -0.02em; }
+.A .hero-stat-n.ok { color: var(--court); }
+.B .hero-stat-n.ok { color: var(--lime); }
+.hero-stat-l { font-size: 8px; opacity: 0.7; letter-spacing: 0.14em; text-transform: uppercase; font-family: var(--mono); margin-top: 2px; }
+
+.mini-card { border-radius: 12px; padding: 10px 12px; }
+.A .mini-card { background: var(--paper); border: 1px solid var(--line); }
+.B .mini-card { background: var(--paper); border: 1px solid var(--line); }
+.mc-tag { font-family: var(--mono); font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.6; }
+.mc-main { font-family: var(--display); font-size: 13px; font-weight: 500; margin-top: 4px; }
+.mc-sub { font-size: 10px; opacity: 0.7; margin-top: 2px; }
+.mc-row { display: flex; align-items: center; gap: 8px; }
+.mc-sep { height: 1px; margin: 8px 0; opacity: 0.5; }
+.A .mc-sep { background: var(--line); }
+.B .mc-sep { background: var(--line); }
+
+/* ═══════════════════ PARTIDOS screen ═══════════════════ */
+.match-card { border-radius: 12px; padding: 10px 12px; }
+.A .match-card { background: var(--paper); border: 1px solid var(--line); }
+.A .match-card.alert { border-color: oklch(80% 0.1 30); background: oklch(98% 0.015 30); }
+.B .match-card { background: var(--paper); border: 1px solid var(--line); }
+.B .match-card.alert { border-color: var(--accent); background: #2a1812; }
+.mc-date-big { display: flex; align-items: baseline; gap: 6px; }
+.mc-date-n { font-family: var(--display); font-weight: 500; font-size: 28px; line-height: 1; letter-spacing: -0.03em; }
+.mc-date-mo { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.6; }
+.mc-date-time { font-family: var(--mono); font-size: 9px; margin-left: auto; opacity: 0.7; }
+.mc-match-line { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-top: 8px; font-family: var(--display); font-size: 12px; font-weight: 500; }
+.mc-team { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.mc-team.right { align-items: flex-end; text-align: right; }
+.mc-team .pn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.A .mc-team .pn.me { color: var(--court-deep); font-weight: 600; }
+.B .mc-team .pn.me { color: var(--lime); font-weight: 600; }
+.mc-vs { font-family: var(--display); font-style: italic; font-size: 11px; opacity: 0.5; }
+.mc-mini-score { font-family: var(--display); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.A .mc-mini-score .me { color: var(--court-deep); }
+.B .mc-mini-score .me { color: var(--lime); }
+
+/* ═══════════════════ PERFIL publico ═══════════════════ */
+.profile-card { border-radius: 16px; overflow: hidden; }
+.A .profile-card { background: #1a1200; border: 1px solid #c9a227; }
+.B .profile-card { background: #0f0c0a; border: 1px solid var(--accent); }
+.profile-top { padding: 12px 14px; }
+.A .profile-top { background: #c9a227; color: #1a1200; }
+.B .profile-top { background: var(--accent); color: var(--cream); }
+.profile-name { font-family: var(--display); font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.A .profile-name { color: #1a1200; }
+.profile-stats-row { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; margin-top: 4px; opacity: 0.8; }
+.profile-body { padding: 14px; }
+.profile-hero-n { font-family: var(--display); font-size: 48px; font-weight: 600; line-height: 1; letter-spacing: -0.03em; }
+.A .profile-hero-n { color: #c9a227; }
+.B .profile-hero-n { color: var(--accent); }
+.profile-hero-l { font-family: var(--mono); font-size: 8px; letter-spacing: 0.16em; text-transform: uppercase; margin-top: 2px; }
+.A .profile-hero-l { color: #7a6020; }
+.B .profile-hero-l { color: #8a7060; }
+
+.radar-wrap { margin-top: 10px; display: grid; place-items: center; }
+.radar-svg { width: 100%; max-width: 180px; }
+
+.evolution { display: grid; grid-template-columns: repeat(auto-fill, minmax(26px, 1fr)); gap: 3px; margin-top: 8px; }
+.ev-bar { border-radius: 2px; }
+
+/* ═══════════════════ cards for design patterns ═══════════════════ */
+.pattern-list { display: grid; gap: 12px; }
+.pattern-title { font-family: var(--display); font-size: 14px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 6px; }
+
+/* footer */
+.foot { max-width: 1600px; margin: 40px auto 0; padding-top: 20px; border-top: 1px solid #d9d7cf; display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.1em; color: #6b7369; }
+.foot > span { text-transform: uppercase; }
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="eyebrow">Bonapinta · Sistema Visual · Abril 2026</div>
+  <h1>Dos direcciones.<br/>Una app.</h1>
+  <p>Dos sistemas completos lado a lado. A la izquierda <strong>COURT</strong> — sporty editorial, claro, verde pista. A la derecha <strong>TERRACOTA</strong> — atrevido, oscuro, tierra batida con línea eléctrica. Elige uno y lo aplicamos a toda la app.</p>
+</div>
+
+<div class="directions">
+
+<!-- ═════════════════════════════ DIRECTION A — COURT ═════════════════════════════ -->
+<section class="dir A">
+  <div class="dir-head">
+    <div class="dir-tag">A · Court</div>
+    <div class="dir-title">Sporty editorial.</div>
+    <div class="dir-sub">Claro, cálido, legible. Verde pista como acento único. Space Grotesk + Inter + JetBrains Mono. Los cromos dorados se mantienen como artefacto premium.</div>
+  </div>
+
+  <!-- tokens -->
+  <div class="section">
+    <div class="section-title">Paleta</div>
+    <div class="swatches">
+      <div class="sw" style="background:#f5f3ee;color:#0b0e0c;"><span class="sw-name">Bone</span><span class="sw-val">#f5f3ee</span></div>
+      <div class="sw" style="background:#fafaf7;color:#0b0e0c;border:1px solid #d9d7cf;"><span class="sw-name">Paper</span><span class="sw-val">#fafaf7</span></div>
+      <div class="sw" style="background:#0b0e0c;color:#f5f3ee;"><span class="sw-name">Ink</span><span class="sw-val">#0b0e0c</span></div>
+      <div class="sw" style="background:oklch(62% 0.17 148);color:#0b0e0c;"><span class="sw-name">Court</span><span class="sw-val">#4fb36a</span></div>
+      <div class="sw" style="background:oklch(48% 0.15 148);color:#f5f3ee;"><span class="sw-name">Deep</span><span class="sw-val">#328449</span></div>
+      <div class="sw" style="background:#c9a227;color:#1a1200;"><span class="sw-name">Clay</span><span class="sw-val">#c9a227</span></div>
+    </div>
+  </div>
+
+  <!-- type -->
+  <div class="section">
+    <div class="section-title">Tipografía</div>
+    <div class="type-scale">
+      <div class="ts-row"><div class="ts-meta">Hero</div><div class="ts-hero">Victoria.</div></div>
+      <div class="ts-row"><div class="ts-meta">H1</div><div class="ts-h1">Mis partidos</div></div>
+      <div class="ts-row"><div class="ts-meta">H2</div><div class="ts-h2">Cuartos de final</div></div>
+      <div class="ts-row"><div class="ts-meta">Body</div><div class="ts-body">Espacio Grotesk para display, Inter para texto UI, JetBrains Mono para datos.</div></div>
+      <div class="ts-row"><div class="ts-meta">Mono</div><div class="ts-mono">LIGA · JORNADA 7 · 18:30H</div></div>
+    </div>
+  </div>
+
+  <!-- components -->
+  <div class="section">
+    <div class="section-title">Componentes</div>
+    <div style="display: grid; gap: 14px;">
+      <div class="btn-row">
+        <button class="btn btn-primary">Confirmar resultado</button>
+        <button class="btn btn-dark">Proponer</button>
+        <button class="btn btn-ghost">Cancelar</button>
+        <button class="btn btn-danger">Rechazar</button>
+      </div>
+      <div class="pill-row">
+        <span class="pill neutral"><span class="dot"></span>Por jugar</span>
+        <span class="pill propose"><span class="dot"></span>Esperando</span>
+        <span class="pill confirm"><span class="dot"></span>Confirmar</span>
+        <span class="pill done"><span class="dot"></span>Ganado</span>
+      </div>
+      <div class="chip-row">
+        <span class="chip on">Todos · 12</span>
+        <span class="chip">Copa Primavera · 4</span>
+        <span class="chip">Liga Clubes · 3</span>
+        <span class="chip">Americana · 2</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- cromos -->
+  <div class="section">
+    <div class="section-title">Cromos · Jugadores</div>
+    <div class="cromos-row">
+      <div class="cromo me">
+        <div class="cromo-strip"><span>NIV·7</span><span>82</span></div>
+        <div class="cromo-body"><div class="cromo-initials">YO</div></div>
+        <div class="cromo-foot"><div class="cromo-first">Tú</div><div class="cromo-last">·</div></div>
+      </div>
+      <div class="cromo">
+        <div class="cromo-strip"><span>NIV·8</span><span>86</span></div>
+        <div class="cromo-body"><div class="cromo-initials">MR</div></div>
+        <div class="cromo-foot"><div class="cromo-first">Martí</div><div class="cromo-last">Roca</div></div>
+      </div>
+      <div class="cromo">
+        <div class="cromo-strip"><span>NIV·6</span><span>78</span></div>
+        <div class="cromo-body"><div class="cromo-initials">AB</div></div>
+        <div class="cromo-foot"><div class="cromo-first">Àlex</div><div class="cromo-last">Bergada</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- hero screens -->
+  <div class="section">
+    <div class="section-title">Pantallas hero · móvil</div>
+    <div class="phones">
+      <!-- INICIO -->
+      <div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+            <div class="screen-body">
+              <div class="hero-wrap">
+                <div class="hero-eyebrow">JUE · 23 ABR</div>
+                <div class="hero-title">Buen día,<br/><em>Tú.</em></div>
+                <div class="hero-stats">
+                  <div><div class="hero-stat-n ok">4</div><div class="hero-stat-l">Pendientes</div></div>
+                  <div><div class="hero-stat-n">12</div><div class="hero-stat-l">Jugados</div></div>
+                  <div><div class="hero-stat-n">9</div><div class="hero-stat-l">Racha</div></div>
+                </div>
+              </div>
+              <div class="mini-card">
+                <div class="mc-tag">Próximo partido</div>
+                <div class="mc-main">Tú & Àlex vs Martí & Pau</div>
+                <div class="mc-sub">Sáb 25 · 11:00 · Pista 2</div>
+                <div class="mc-sep"></div>
+                <div class="mc-row" style="justify-content: space-between;">
+                  <span class="pill confirm"><span class="dot"></span>Confirmar</span>
+                  <span style="font-family: var(--mono); font-size: 9px; opacity: 0.6;">⏱ 18h</span>
+                </div>
+              </div>
+              <div class="mini-card">
+                <div class="mc-tag">Torneos activos</div>
+                <div class="mc-main">Copa Primavera</div>
+                <div class="mc-sub">3º · 7–2 W/L</div>
+              </div>
+            </div>
+            <div class="tabbar">
+              <div class="tab-item on"><div class="tab-dot"></div><div class="tab-icon" style="background:var(--court-deep);mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L2 12h3v8h14v-8h3L12 2z'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L2 12h3v8h14v-8h3L12 2z'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Inicio</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='5' width='18' height='14' rx='2'/><line x1='8' y1='9' x2='8' y2='15'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='5' width='18' height='14' rx='2'/><line x1='8' y1='9' x2='8' y2='15'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Partidos</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M6 9h12M6 15h12'/><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><path d='M6 9h12M6 15h12'/><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Torneos</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Gente</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/><circle cx='12' cy='10' r='3'/><path d='M6 18c1-3 4-4 6-4s5 1 6 4'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/><circle cx='12' cy='10' r='3'/><path d='M6 18c1-3 4-4 6-4s5 1 6 4'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Perfil</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Inicio</div>
+      </div>
+
+      <!-- PARTIDOS -->
+      <div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+            <div class="screen-body">
+              <div style="font-family: var(--display); font-size: 26px; font-weight: 500; letter-spacing: -0.03em; line-height: 1;">Mis <em style="color: var(--court-deep); font-style: normal;">partidos.</em></div>
+              <div class="chip-row" style="gap: 4px;">
+                <span class="chip on" style="font-size: 10px; padding: 4px 10px;">Todos</span>
+                <span class="chip" style="font-size: 10px; padding: 4px 10px;">Copa</span>
+                <span class="chip" style="font-size: 10px; padding: 4px 10px;">Liga</span>
+              </div>
+              <div class="match-card alert">
+                <div class="mc-date-big">
+                  <span class="mc-date-n">22</span>
+                  <span class="mc-date-mo">abr · mar</span>
+                  <span class="mc-date-time">20:30H</span>
+                </div>
+                <div class="mc-match-line">
+                  <div class="mc-team"><span class="pn me">Tú & Àlex</span></div>
+                  <span class="mc-vs">vs</span>
+                  <div class="mc-team right"><span class="pn">Martí & Pau</span></div>
+                </div>
+                <div style="margin-top: 6px;"><span class="pill confirm"><span class="dot"></span>Rival propone 6–4 3–6 7–5</span></div>
+              </div>
+              <div class="match-card">
+                <div class="mc-date-big">
+                  <span class="mc-date-n">25</span>
+                  <span class="mc-date-mo">abr · sáb</span>
+                  <span class="mc-date-time">11:00H</span>
+                </div>
+                <div class="mc-match-line">
+                  <div class="mc-team"><span class="pn me">Tú & Nil</span></div>
+                  <span class="mc-vs">vs</span>
+                  <div class="mc-team right"><span class="pn">Ignasi & Bernat</span></div>
+                </div>
+                <div style="margin-top: 6px;"><span class="pill neutral"><span class="dot"></span>Por jugar</span></div>
+              </div>
+              <div class="match-card">
+                <div class="mc-date-big">
+                  <span class="mc-date-n">18</span>
+                  <span class="mc-date-mo">abr · vie</span>
+                  <span class="mc-date-time">19:00H</span>
+                </div>
+                <div class="mc-match-line">
+                  <div class="mc-team"><span class="pn me">Tú & Bernat</span></div>
+                  <span class="mc-mini-score"><span class="me">2</span>–0</span>
+                  <div class="mc-team right"><span class="pn">Martí & Nil</span></div>
+                </div>
+                <div style="margin-top: 6px;"><span class="pill done"><span class="dot"></span>Ganado</span></div>
+              </div>
+            </div>
+            <div class="tabbar">
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L2 12h3v8h14v-8h3L12 2z'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L2 12h3v8h14v-8h3L12 2z'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Inicio</div></div>
+              <div class="tab-item on"><div class="tab-dot"></div><div class="tab-icon" style="background:var(--court-deep);mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='5' width='18' height='14' rx='2'/><line x1='8' y1='9' x2='8' y2='15'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='5' width='18' height='14' rx='2'/><line x1='8' y1='9' x2='8' y2='15'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Partidos</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Torneos</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='8' r='4'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='8' r='4'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Gente</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Perfil</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Mis partidos</div>
+      </div>
+
+      <!-- PERFIL PUBLICO -->
+      <div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+            <div class="screen-body">
+              <div class="profile-card">
+                <div class="profile-top">
+                  <div style="font-family: var(--mono); font-size: 8px; letter-spacing: 0.14em;">NIVEL 7 · 82 OVR</div>
+                  <div class="profile-name">Martí Roca</div>
+                  <div class="profile-stats-row"><span>18 WINS</span><span>·</span><span>6 LOSS</span><span>·</span><span>75%</span></div>
+                </div>
+                <div class="profile-body">
+                  <div style="display: flex; align-items: baseline; gap: 12px;">
+                    <div><div class="profile-hero-n">86</div><div class="profile-hero-l">OVR</div></div>
+                    <div><div class="profile-hero-n" style="font-size: 32px;">3</div><div class="profile-hero-l">Top 3</div></div>
+                  </div>
+                  <div class="radar-wrap">
+                    <svg class="radar-svg" viewBox="-100 -100 200 200">
+                      <!-- rings -->
+                      <polygon points="0,-80 69.3,-40 69.3,40 0,80 -69.3,40 -69.3,-40" fill="none" stroke="#c9a22730" stroke-width="0.5"/>
+                      <polygon points="0,-60 52,-30 52,30 0,60 -52,30 -52,-30" fill="none" stroke="#c9a22720" stroke-width="0.5"/>
+                      <polygon points="0,-40 34.6,-20 34.6,20 0,40 -34.6,20 -34.6,-20" fill="none" stroke="#c9a22720" stroke-width="0.5"/>
+                      <polygon points="0,-20 17.3,-10 17.3,10 0,20 -17.3,10 -17.3,-10" fill="none" stroke="#c9a22720" stroke-width="0.5"/>
+                      <!-- axes -->
+                      <line x1="0" y1="0" x2="0" y2="-80" stroke="#c9a22730" stroke-width="0.5"/>
+                      <line x1="0" y1="0" x2="69.3" y2="-40" stroke="#c9a22730" stroke-width="0.5"/>
+                      <line x1="0" y1="0" x2="69.3" y2="40" stroke="#c9a22730" stroke-width="0.5"/>
+                      <line x1="0" y1="0" x2="0" y2="80" stroke="#c9a22730" stroke-width="0.5"/>
+                      <line x1="0" y1="0" x2="-69.3" y2="40" stroke="#c9a22730" stroke-width="0.5"/>
+                      <line x1="0" y1="0" x2="-69.3" y2="-40" stroke="#c9a22730" stroke-width="0.5"/>
+                      <!-- data polygon (7 axes visual approx w/ 6 shown) -->
+                      <polygon points="0,-72 60,-34 55,28 0,64 -48,26 -58,-30" fill="#c9a22740" stroke="#c9a227" stroke-width="1.5"/>
+                      <!-- labels -->
+                      <text x="0" y="-88" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#c9a227" letter-spacing="1">SMASH</text>
+                      <text x="77" y="-40" text-anchor="start" font-family="JetBrains Mono" font-size="8" fill="#c9a227">VOLEA</text>
+                      <text x="77" y="45" text-anchor="start" font-family="JetBrains Mono" font-size="8" fill="#c9a227">GLOBO</text>
+                      <text x="0" y="94" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#c9a227">BAND.</text>
+                      <text x="-77" y="45" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#c9a227">PARED</text>
+                      <text x="-77" y="-40" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#c9a227">RESTO</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="mini-card">
+                <div class="mc-tag">Evolución · 12 partidos</div>
+                <div class="evolution">
+                  <div class="ev-bar" style="background:#16653460;height:14px;"></div>
+                  <div class="ev-bar" style="background:#16653480;height:18px;"></div>
+                  <div class="ev-bar" style="background:#9b1f1f60;height:10px;"></div>
+                  <div class="ev-bar" style="background:#166534;height:22px;"></div>
+                  <div class="ev-bar" style="background:#166534;height:26px;"></div>
+                  <div class="ev-bar" style="background:#9b1f1f80;height:12px;"></div>
+                  <div class="ev-bar" style="background:#166534;height:24px;"></div>
+                  <div class="ev-bar" style="background:#16653490;height:20px;"></div>
+                  <div class="ev-bar" style="background:#166534;height:28px;"></div>
+                  <div class="ev-bar" style="background:#166534;height:26px;"></div>
+                  <div class="ev-bar" style="background:#9b1f1f60;height:14px;"></div>
+                  <div class="ev-bar" style="background:#166534;height:30px;"></div>
+                </div>
+              </div>
+            </div>
+            <div class="tabbar">
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L2 12h3v8h14v-8h3L12 2z'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L2 12h3v8h14v-8h3L12 2z'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Inicio</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='5' width='18' height='14' rx='2'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='5' width='18' height='14' rx='2'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Partidos</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Torneos</div></div>
+              <div class="tab-item on"><div class="tab-dot"></div><div class="tab-icon" style="background:var(--court-deep);mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='8' r='4'/><path d='M4 20c0-4 4-6 8-6s8 2 8 6'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Gente</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Perfil</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Perfil público</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- nav pattern -->
+  <div class="section">
+    <div class="section-title">Navegación · móvil</div>
+    <div class="pattern-title">Tab bar inferior · 5 items fijos</div>
+    <p style="font-size: 12px; color: var(--ink-2); line-height: 1.5;">Inicio · Partidos · Torneos · Gente · Perfil. "Valorar", "Mi pareja" y "Disponibilidad" viven como sub-secciones dentro de Inicio y Perfil. El item activo se marca con punto verde y texto acentuado.</p>
+  </div>
+</section>
+
+<!-- ═════════════════════════════ DIRECTION B — TERRACOTA ═════════════════════════════ -->
+<section class="dir B">
+  <div class="dir-head">
+    <div class="dir-tag">B · Terracota</div>
+    <div class="dir-title">Tierra batida.</div>
+    <div class="dir-sub">Oscuro, terroso, dramático. Naranja arcilla como acento principal, lima eléctrica como "línea de pista" para éxito y foco. Fraunces itálico para el display — voz editorial, no tech.</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Paleta</div>
+    <div class="swatches">
+      <div class="sw" style="background:#1b1612;color:#f3ece1;"><span class="sw-name">Earth</span><span class="sw-val">#1b1612</span></div>
+      <div class="sw" style="background:#221c17;color:#f3ece1;"><span class="sw-name">Paper</span><span class="sw-val">#221c17</span></div>
+      <div class="sw" style="background:#f3ece1;color:#1b1612;"><span class="sw-name">Cream</span><span class="sw-val">#f3ece1</span></div>
+      <div class="sw" style="background:#e8532a;color:#f3ece1;"><span class="sw-name">Clay</span><span class="sw-val">#e8532a</span></div>
+      <div class="sw" style="background:#d4f046;color:#1b1612;"><span class="sw-name">Lime</span><span class="sw-val">#d4f046</span></div>
+      <div class="sw" style="background:#b33d1e;color:#f3ece1;"><span class="sw-name">Deep</span><span class="sw-val">#b33d1e</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Tipografía</div>
+    <div class="type-scale">
+      <div class="ts-row"><div class="ts-meta">Hero</div><div class="ts-hero">Victoria.</div></div>
+      <div class="ts-row"><div class="ts-meta">H1</div><div class="ts-h1">Mis partidos</div></div>
+      <div class="ts-row"><div class="ts-meta">H2</div><div class="ts-h2">Cuartos de final</div></div>
+      <div class="ts-row"><div class="ts-meta">Body</div><div class="ts-body">Fraunces itálico en display, Inter para UI, JetBrains Mono para números. El itálico del Fraunces da voz editorial propia.</div></div>
+      <div class="ts-row"><div class="ts-meta">Mono</div><div class="ts-mono">LIGA · JORNADA 7 · 18:30H</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Componentes</div>
+    <div style="display: grid; gap: 14px;">
+      <div class="btn-row">
+        <button class="btn btn-primary">Confirmar resultado</button>
+        <button class="btn btn-dark">Proponer</button>
+        <button class="btn btn-ghost">Cancelar</button>
+        <button class="btn btn-danger">Rechazar</button>
+      </div>
+      <div class="pill-row">
+        <span class="pill neutral"><span class="dot"></span>Por jugar</span>
+        <span class="pill propose"><span class="dot"></span>Esperando</span>
+        <span class="pill confirm"><span class="dot"></span>Confirmar</span>
+        <span class="pill done"><span class="dot"></span>Ganado</span>
+      </div>
+      <div class="chip-row">
+        <span class="chip on">Todos · 12</span>
+        <span class="chip">Copa Primavera · 4</span>
+        <span class="chip">Liga Clubes · 3</span>
+        <span class="chip">Americana · 2</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Cromos · Jugadores</div>
+    <div class="cromos-row">
+      <div class="cromo me">
+        <div class="cromo-strip"><span>NIV·7</span><span>82</span></div>
+        <div class="cromo-body"><div class="cromo-initials">YO</div></div>
+        <div class="cromo-foot"><div class="cromo-first">Tú</div><div class="cromo-last">·</div></div>
+      </div>
+      <div class="cromo">
+        <div class="cromo-strip"><span>NIV·8</span><span>86</span></div>
+        <div class="cromo-body"><div class="cromo-initials">MR</div></div>
+        <div class="cromo-foot"><div class="cromo-first">Martí</div><div class="cromo-last">Roca</div></div>
+      </div>
+      <div class="cromo">
+        <div class="cromo-strip"><span>NIV·6</span><span>78</span></div>
+        <div class="cromo-body"><div class="cromo-initials">AB</div></div>
+        <div class="cromo-foot"><div class="cromo-first">Àlex</div><div class="cromo-last">Bergada</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Pantallas hero · móvil</div>
+    <div class="phones">
+      <!-- INICIO B -->
+      <div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+            <div class="screen-body">
+              <div class="hero-wrap">
+                <div class="hero-eyebrow">JUE · 23 ABR</div>
+                <div class="hero-title">Buen día,<br/><em>Tú.</em></div>
+                <div class="hero-stats">
+                  <div><div class="hero-stat-n ok">4</div><div class="hero-stat-l">Pendientes</div></div>
+                  <div><div class="hero-stat-n">12</div><div class="hero-stat-l">Jugados</div></div>
+                  <div><div class="hero-stat-n">9</div><div class="hero-stat-l">Racha</div></div>
+                </div>
+              </div>
+              <div class="mini-card">
+                <div class="mc-tag">Próximo partido</div>
+                <div class="mc-main">Tú & Àlex vs Martí & Pau</div>
+                <div class="mc-sub" style="color: var(--ink-2);">Sáb 25 · 11:00 · Pista 2</div>
+                <div class="mc-sep"></div>
+                <div class="mc-row" style="justify-content: space-between;">
+                  <span class="pill confirm"><span class="dot"></span>Confirmar</span>
+                  <span style="font-family: var(--mono); font-size: 9px; color: var(--ink-2);">⏱ 18h</span>
+                </div>
+              </div>
+              <div class="mini-card">
+                <div class="mc-tag">Torneos activos</div>
+                <div class="mc-main">Copa Primavera</div>
+                <div class="mc-sub" style="color: var(--ink-2);">3º · 7–2 W/L</div>
+              </div>
+            </div>
+            <div class="tabbar">
+              <div class="tab-item on"><div class="tab-dot"></div><div class="tab-icon" style="background:var(--lime);mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L2 12h3v8h14v-8h3L12 2z'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L2 12h3v8h14v-8h3L12 2z'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Inicio</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='5' width='18' height='14' rx='2'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='5' width='18' height='14' rx='2'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Partidos</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Torneos</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='8' r='4'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='8' r='4'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Gente</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Perfil</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Inicio</div>
+      </div>
+
+      <!-- PARTIDOS B -->
+      <div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+            <div class="screen-body">
+              <div style="font-family: var(--display); font-style: italic; font-size: 26px; font-weight: 500; letter-spacing: -0.02em; line-height: 1;">Mis <em style="color: var(--accent); font-style: italic;">partidos.</em></div>
+              <div class="chip-row" style="gap: 4px;">
+                <span class="chip on" style="font-size: 10px; padding: 4px 10px;">Todos</span>
+                <span class="chip" style="font-size: 10px; padding: 4px 10px;">Copa</span>
+                <span class="chip" style="font-size: 10px; padding: 4px 10px;">Liga</span>
+              </div>
+              <div class="match-card alert">
+                <div class="mc-date-big">
+                  <span class="mc-date-n">22</span>
+                  <span class="mc-date-mo">abr · mar</span>
+                  <span class="mc-date-time">20:30H</span>
+                </div>
+                <div class="mc-match-line">
+                  <div class="mc-team"><span class="pn me">Tú & Àlex</span></div>
+                  <span class="mc-vs">vs</span>
+                  <div class="mc-team right"><span class="pn">Martí & Pau</span></div>
+                </div>
+                <div style="margin-top: 6px;"><span class="pill confirm"><span class="dot"></span>Rival propone 6–4 3–6 7–5</span></div>
+              </div>
+              <div class="match-card">
+                <div class="mc-date-big">
+                  <span class="mc-date-n">25</span>
+                  <span class="mc-date-mo">abr · sáb</span>
+                  <span class="mc-date-time">11:00H</span>
+                </div>
+                <div class="mc-match-line">
+                  <div class="mc-team"><span class="pn me">Tú & Nil</span></div>
+                  <span class="mc-vs">vs</span>
+                  <div class="mc-team right"><span class="pn">Ignasi & Bernat</span></div>
+                </div>
+                <div style="margin-top: 6px;"><span class="pill neutral"><span class="dot"></span>Por jugar</span></div>
+              </div>
+              <div class="match-card">
+                <div class="mc-date-big">
+                  <span class="mc-date-n">18</span>
+                  <span class="mc-date-mo">abr · vie</span>
+                  <span class="mc-date-time">19:00H</span>
+                </div>
+                <div class="mc-match-line">
+                  <div class="mc-team"><span class="pn me">Tú & Bernat</span></div>
+                  <span class="mc-mini-score"><span class="me">2</span>–0</span>
+                  <div class="mc-team right"><span class="pn">Martí & Nil</span></div>
+                </div>
+                <div style="margin-top: 6px;"><span class="pill done"><span class="dot"></span>Ganado</span></div>
+              </div>
+            </div>
+            <div class="tabbar">
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L2 12h3v8h14v-8h3L12 2z'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L2 12h3v8h14v-8h3L12 2z'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Inicio</div></div>
+              <div class="tab-item on"><div class="tab-dot"></div><div class="tab-icon" style="background:var(--lime);mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='5' width='18' height='14' rx='2'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='5' width='18' height='14' rx='2'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Partidos</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Torneos</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='8' r='4'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='8' r='4'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Gente</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Perfil</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Mis partidos</div>
+      </div>
+
+      <!-- PERFIL B -->
+      <div>
+        <div class="phone">
+          <div class="screen">
+            <div class="statusbar"><span>9:41</span><span>●●●</span></div>
+            <div class="screen-body">
+              <div class="profile-card">
+                <div class="profile-top">
+                  <div style="font-family: var(--mono); font-size: 8px; letter-spacing: 0.14em;">NIVEL 7 · 82 OVR</div>
+                  <div class="profile-name">Martí Roca</div>
+                  <div class="profile-stats-row"><span>18 WINS</span><span>·</span><span>6 LOSS</span><span>·</span><span>75%</span></div>
+                </div>
+                <div class="profile-body">
+                  <div style="display: flex; align-items: baseline; gap: 12px;">
+                    <div><div class="profile-hero-n">86</div><div class="profile-hero-l">OVR</div></div>
+                    <div><div class="profile-hero-n" style="font-size: 32px;">3</div><div class="profile-hero-l">Top 3</div></div>
+                  </div>
+                  <div class="radar-wrap">
+                    <svg class="radar-svg" viewBox="-100 -100 200 200">
+                      <polygon points="0,-80 69.3,-40 69.3,40 0,80 -69.3,40 -69.3,-40" fill="none" stroke="#e8532a40" stroke-width="0.5"/>
+                      <polygon points="0,-60 52,-30 52,30 0,60 -52,30 -52,-30" fill="none" stroke="#e8532a20" stroke-width="0.5"/>
+                      <polygon points="0,-40 34.6,-20 34.6,20 0,40 -34.6,20 -34.6,-20" fill="none" stroke="#e8532a20" stroke-width="0.5"/>
+                      <polygon points="0,-20 17.3,-10 17.3,10 0,20 -17.3,10 -17.3,-10" fill="none" stroke="#e8532a20" stroke-width="0.5"/>
+                      <line x1="0" y1="0" x2="0" y2="-80" stroke="#e8532a40" stroke-width="0.5"/>
+                      <line x1="0" y1="0" x2="69.3" y2="-40" stroke="#e8532a40" stroke-width="0.5"/>
+                      <line x1="0" y1="0" x2="69.3" y2="40" stroke="#e8532a40" stroke-width="0.5"/>
+                      <line x1="0" y1="0" x2="0" y2="80" stroke="#e8532a40" stroke-width="0.5"/>
+                      <line x1="0" y1="0" x2="-69.3" y2="40" stroke="#e8532a40" stroke-width="0.5"/>
+                      <line x1="0" y1="0" x2="-69.3" y2="-40" stroke="#e8532a40" stroke-width="0.5"/>
+                      <polygon points="0,-72 60,-34 55,28 0,64 -48,26 -58,-30" fill="#d4f04640" stroke="#d4f046" stroke-width="1.5"/>
+                      <text x="0" y="-88" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#e8532a" letter-spacing="1">SMASH</text>
+                      <text x="77" y="-40" text-anchor="start" font-family="JetBrains Mono" font-size="8" fill="#e8532a">VOLEA</text>
+                      <text x="77" y="45" text-anchor="start" font-family="JetBrains Mono" font-size="8" fill="#e8532a">GLOBO</text>
+                      <text x="0" y="94" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#e8532a">BAND.</text>
+                      <text x="-77" y="45" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#e8532a">PARED</text>
+                      <text x="-77" y="-40" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="#e8532a">RESTO</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="mini-card">
+                <div class="mc-tag">Evolución · 12 partidos</div>
+                <div class="evolution">
+                  <div class="ev-bar" style="background:#d4f04660;height:14px;"></div>
+                  <div class="ev-bar" style="background:#d4f04680;height:18px;"></div>
+                  <div class="ev-bar" style="background:#e8532a60;height:10px;"></div>
+                  <div class="ev-bar" style="background:#d4f046;height:22px;"></div>
+                  <div class="ev-bar" style="background:#d4f046;height:26px;"></div>
+                  <div class="ev-bar" style="background:#e8532a80;height:12px;"></div>
+                  <div class="ev-bar" style="background:#d4f046;height:24px;"></div>
+                  <div class="ev-bar" style="background:#d4f04690;height:20px;"></div>
+                  <div class="ev-bar" style="background:#d4f046;height:28px;"></div>
+                  <div class="ev-bar" style="background:#d4f046;height:26px;"></div>
+                  <div class="ev-bar" style="background:#e8532a60;height:14px;"></div>
+                  <div class="ev-bar" style="background:#d4f046;height:30px;"></div>
+                </div>
+              </div>
+            </div>
+            <div class="tabbar">
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L2 12h3v8h14v-8h3L12 2z'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'><path d='M12 2L2 12h3v8h14v-8h3L12 2z'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Inicio</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='5' width='18' height='14' rx='2'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><rect x='3' y='5' width='18' height='14' rx='2'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Partidos</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Torneos</div></div>
+              <div class="tab-item on"><div class="tab-dot"></div><div class="tab-icon" style="background:var(--lime);mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='8' r='4'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='8' r='4'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Gente</div></div>
+              <div class="tab-item"><div class="tab-icon" style="background:currentColor;mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;-webkit-mask:url(data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='9'/></svg>) center/contain no-repeat;"></div><div class="tab-label">Perfil</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Perfil público</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Navegación · móvil</div>
+    <div class="pattern-title">Tab bar inferior · 5 items · barra lima como highlight</div>
+    <p style="font-size: 12px; color: var(--ink-2); line-height: 1.5;">Mismo patrón de 5 items que Court, pero el indicador activo es una barra lima horizontal sobre el icono — evoca la línea de pista. Lima se usa SOLO para foco/éxito (victoria, tab activo, CTA secundario). Clay para CTAs principales.</p>
+  </div>
+</section>
+
+</div>
+
+<div class="foot">
+  <span>Bonapinta · Sistema Visual</span>
+  <span>2 Direcciones · 3 Hero screens c/u</span>
+  <span>v 1.0</span>
+</div>
+
+</body>
+</html>

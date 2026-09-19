@@ -1,0 +1,33 @@
+# Dependencies
+backend/node_modules/
+frontend/node_modules/
+
+# Build
+frontend/dist/
+
+# Environment (sensitive data) — only *.example files are versioned
+backend/.env
+/.env
+/.env.*
+!/.env.example
+/uploads/
+
+# Backups
+*.sql
+!backend/prisma/migrations/**/*.sql
+
+# Logs
+*.log
+
+# Docker volumes
+postgres_data/
+
+# User-uploaded files (persisted via Docker volume, not git)
+backend/uploads/
+
+# Claude Code local settings (per-machine permissions, never shared)
+.claude/
+
+# OS / editor
+.DS_Store
+Thumbs.db

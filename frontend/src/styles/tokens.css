@@ -1,0 +1,106 @@
+/* ═══════════════════════════════════════════════════════════════
+   BONAPINTA · Sistema Visual "Sporty Editorial"
+   Dirección A: COURT — claro, verde pista
+   Space Grotesk (display) + Inter (body) + JetBrains Mono (data)
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Surface ── */
+  --bone:       #f5f3ee;
+  --bone-2:     #ecebe5;
+  --bone-3:     #e3e1da;
+  --paper:      #fafaf7;
+
+  /* ── Ink ── */
+  --ink:        #0b0e0c;
+  --ink-2:      #1a1f1c;
+  --ink-mid:    #4a544d;
+  --ink-soft:   #6b7369;
+
+  /* ── Borders ── */
+  --line:       #d9d7cf;
+  --line-soft:  #e8e6df;
+
+  /* ── Court (green accent) ── */
+  --court:      oklch(62% 0.17 148);
+  --court-deep: oklch(48% 0.15 148);
+  --court-dim:  oklch(28% 0.07 148);
+  --court-soft: oklch(94% 0.04 148);
+  --court-aa:   oklch(40% 0.13 148);
+
+  /* ── Cromo gold (preserved) ── */
+  --clay:       #c9a227;
+  --clay-deep:  #7a6020;
+  --clay-dark:  #1a1200;
+
+  /* ── Feedback ── */
+  --amber:      #b45309;
+  --amber-soft: #fef3c7;
+  --crimson:    #9b1f1f;
+  --crimson-soft: #fee4e4;
+  --ok:         #166534;
+  --ok-soft:    #dcfce7;
+
+  /* ── Typography ── */
+  --display: 'Space Grotesk', system-ui, sans-serif;
+  --body:    'Inter', system-ui, sans-serif;
+  --mono:    'JetBrains Mono', ui-monospace, monospace;
+
+  /* ── Spacing ── */
+  --s-1: 4px;  --s-2: 8px;   --s-3: 12px; --s-4: 16px;
+  --s-5: 24px; --s-6: 32px;  --s-7: 48px; --s-8: 64px;
+
+  /* ── Radius ── */
+  --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 24px;
+
+  /* ── Hit targets ── */
+  --hit:        48px;
+  --hit-cta:    56px;
+  --hit-tabbar: 64px;
+
+  /* ── Focus ── */
+  --focus: 3px solid var(--court-deep);
+  --focus-offset: 2px;
+
+  /* ── Backward-compat: --bp-* → new tokens ── */
+  --bp-bg:        var(--bone);
+  --bp-surface:   var(--paper);
+  --bp-surface-2: var(--bone-2);
+  --bp-surface-3: var(--bone-3);
+  --bp-text:      var(--ink);
+  --bp-text-2:    var(--ink-mid);
+  --bp-text-3:    var(--ink-soft);
+  --bp-border:    var(--line);
+  --bp-border-2:  var(--line-soft);
+  --bp-brand:     var(--court-deep);
+  --bp-brand-bg:  var(--court-soft);
+  --bp-brand-bd:  oklch(85% 0.1 148);
+}
+
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Skip link ── */
+.bp-skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--s-4);
+  z-index: 9999;
+  background: var(--court);
+  color: var(--ink);
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r-sm);
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+}
+.bp-skip-link:focus {
+  top: var(--s-4);
+}
