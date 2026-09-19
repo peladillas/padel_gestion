@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authService, playerService, clubService } from '../services/api';
 import AvatarUpload from '../components/AvatarUpload';
@@ -410,6 +411,7 @@ export default function Profile() {
                   {clubs.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
+              <Link to="/club-directory" style={{fontSize:12,fontWeight:700,color:'var(--court-deep)',textDecoration:'none'}}>Explorar todos los clubs →</Link>
             </div>
           )}
 

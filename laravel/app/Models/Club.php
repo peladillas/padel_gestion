@@ -17,7 +17,10 @@ class Club extends Model
     const UPDATED_AT = 'updatedAt';
 
     protected $fillable = [
-        'name', 'slug', 'description', 'logoUrl',
+        'name', 'slug', 'description', 'logoUrl', 'services',
+        'address', 'city', 'region', 'postalCode', 'country', 'latitude', 'longitude',
+        'phones', 'email', 'website', 'bookingUrl', 'instagram', 'facebook',
+        'openingHours', 'timezone', 'priceFrom', 'priceTo', 'currency',
         'allowedStructures', 'allowedPairingSystems',
     ];
 
@@ -27,6 +30,14 @@ class Club extends Model
             // null = all allowed; JSON array of strings when restricted.
             'allowedStructures' => 'array',
             'allowedPairingSystems' => 'array',
+            // Keys of App\Support\ClubServiceCatalog; null = none declared.
+            'services' => 'array',
+            'phones' => 'array',
+            'openingHours' => 'array',
+            'latitude' => 'float',
+            'longitude' => 'float',
+            'priceFrom' => 'float',
+            'priceTo' => 'float',
         ];
     }
 

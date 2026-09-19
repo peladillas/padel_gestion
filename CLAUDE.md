@@ -400,7 +400,7 @@ Valoration {
 ## Comandos útiles
 ```bash
 # Laravel (desde laravel/)
-./vendor/bin/pest                                  # tests (166)
+./vendor/bin/pest                                  # tests (387)
 php artisan bonapinta:create-admin <email>         # primer SUPER_ADMIN
 php artisan bonapinta:check-config                 # preflight de producción
 php artisan tournaments:auto-confirm               # auto-confirma resultados propuestos (>24h)
@@ -481,8 +481,7 @@ Añadir validación RFC antes de llamar al API.
 - Dashboard player: separar torneos de "mi club" vs "otros clubs"
 
 ### 7. Gestión de clubs — mejoras pendientes
-- Logo de club: `logoUrl` existe en BD pero no hay UI de upload en `/clubs`
-- Descripción de club: campo `description` en BD pero no editable desde el frontend
+- ~~Logo y descripción de club~~ — hechos (foto, descripción corta y servicios; ver `laravel/MIGRATION.md` §26)
 
 ### 8. Cupo máximo — mejora UI en pestaña Invitar
 `MaxParticipantsEditor` (Config) y `TournamentInvitationsEditor` (Invitar) gestionan `maxParticipants` independientemente.

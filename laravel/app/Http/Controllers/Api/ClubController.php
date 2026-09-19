@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Models\Club;
+use App\Services\ClubDirectoryService;
 use App\Services\ClubService;
 use App\Services\CourtService;
+use App\Support\ClubProfileRules;
 use Illuminate\Http\Request;
 
 /**
@@ -14,16 +16,40 @@ use Illuminate\Http\Request;
  */
 class ClubController extends Controller
 {
+    /** Everything a court's create/edit form may send. */
+    protected const COURT_FIELDS = ['name', 'alias', 'isActive', 'material', 'floor', 'walls', 'orientation', 'setting', 'status', 'hasLighting', 'notes'];
+
     public function __construct(
         protected ClubService $clubs,
         protected CourtService $courts,
+        protected ClubDirectoryService $directory,
     ) {}
 
     public function publicList()
     {
         return response()->json(
-            Club::orderBy('name')->get(['id', 'name', 'slug'])
+            Club::orderBy('name')->get(['id', 'name', 'slug', 'description', 'logoUrl', 'services'])
         );
+    }
+
+    /**
+     * The club directory, open to every logged-in role: search, filter by
+     * services / city / open days / open now / distance / courts / price, sort
+     * and paginate. See ClubDirectoryService for the query parameters.
+     */
+    public function directory(Request $request)
+    {
+        return response()->json($this->directory->search($request->query()));
+    }
+
+    /** One club's card (same shape as a directory entry); pass lat/lng to get its distance. */
+    public function card(Request $request, string $id)
+    {
+        $origin = is_numeric($request->query('lat')) && is_numeric($request->query('lng'))
+            ? ['lat' => (float) $request->query('lat'), 'lng' => (float) $request->query('lng')]
+            : null;
+
+        return response()->json($this->directory->find($id, $origin));
     }
 
     public function index(Request $request)
@@ -49,7 +75,35 @@ class ClubController extends Controller
 
     public function update(Request $request, string $id)
     {
-        return response()->json($this->clubs->update($id, $request->only(['name', 'slug', 'description', 'logoUrl'])));
+        return response()->json($this->clubs->update($id, $request->only(array_merge(['name', 'slug'], ClubProfileRules::FIELDS))));
+    }
+
+    /** Catalogue of services a club can declare (public data, same for everyone). */
+    public function serviceCatalog()
+    {
+        return response()->json(\App\Support\ClubServiceCatalog::toArray());
+    }
+
+    /** Description + services: editable by the club's own admin (or a super admin). */
+    public function updateProfile(Request $request, string $id)
+    {
+        $this->clubs->assertCanManage($request->user(), $id);
+
+        return response()->json($this->clubs->updateProfile($id, $request->only(ClubProfileRules::FIELDS)));
+    }
+
+    public function uploadLogo(Request $request, string $id)
+    {
+        $this->clubs->assertCanManage($request->user(), $id);
+
+        return response()->json($this->clubs->setLogo($id, $request->file('logo')));
+    }
+
+    public function deleteLogo(Request $request, string $id)
+    {
+        $this->clubs->assertCanManage($request->user(), $id);
+
+        return response()->json($this->clubs->removeLogo($id));
     }
 
     public function destroy(string $id)
@@ -96,23 +150,30 @@ class ClubController extends Controller
         ));
     }
 
-    public function courtsIndex(string $id)
+    public function courtsIndex(Request $request, string $id)
     {
+        $this->clubs->assertCanManage($request->user(), $id);
+
         return response()->json($this->courts->list($id));
     }
 
     public function courtsStore(Request $request, string $id)
     {
-        return response()->json($this->courts->create($id, $request->only(['name', 'alias'])), 201);
+        $this->clubs->assertCanManage($request->user(), $id);
+
+        return response()->json($this->courts->create($id, $request->only(self::COURT_FIELDS)), 201);
     }
 
     public function courtsUpdate(Request $request, string $id, string $courtId)
     {
-        return response()->json($this->courts->update($courtId, $id, $request->only(['name', 'alias', 'isActive'])));
+        $this->clubs->assertCanManage($request->user(), $id);
+
+        return response()->json($this->courts->update($courtId, $id, $request->only(self::COURT_FIELDS)));
     }
 
-    public function courtsDestroy(string $id, string $courtId)
+    public function courtsDestroy(Request $request, string $id, string $courtId)
     {
+        $this->clubs->assertCanManage($request->user(), $id);
         $this->courts->remove($courtId, $id);
 
         return response()->json(['message' => 'Pista eliminada']);

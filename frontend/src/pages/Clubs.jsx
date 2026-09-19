@@ -3,10 +3,15 @@ import { useAuth } from '../context/AuthContext';
 import { clubService, tournamentTypeService } from '../services/api';
 import {
   BuildingOffice2Icon, PlusIcon, ChevronDownIcon, ChevronUpIcon,
-  XMarkIcon, TrashIcon, PencilSquareIcon, MapPinIcon,
+  XMarkIcon, TrashIcon, PencilSquareIcon, MapPinIcon, EyeIcon,
 } from '@heroicons/react/24/outline';
 import Switch from '../components/ui/Switch';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import { Link } from 'react-router-dom';
+import EditClubModal from '../components/club/EditClubModal';
+import ClubDetailModal from '../components/club/ClubDetailModal';
+import ClubCourtsSection from '../components/club/ClubCourtsSection';
+import { ServiceList } from '../components/club/clubServices';
 
 const STATUS_COLOR = { active: 'var(--ok)', draft: 'var(--amber)', completed: 'var(--ink-soft)' };
 
@@ -296,156 +301,6 @@ function TournamentTypesPanel({ clubId, initialStructures }) {
 }
 
 // ── Courts panel ────────────────────────────────────────────────────────────
-function CourtsPanel({ clubId }) {
-  const [courts, setCourts]       = useState(null);
-  const [loading, setLoading]     = useState(true);
-  const [editingId, setEditingId] = useState(null); // null | 'new' | court.id
-  const [form, setForm]           = useState({ name: '', alias: '' });
-  const [saving, setSaving]       = useState(false);
-  const [err, setErr]             = useState('');
-  const [loadError, setLoadError] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState(null);
-
-  const load = useCallback(async () => {
-    setLoading(true); setLoadError('');
-    try { const r = await clubService.getCourts(clubId); setCourts(r.data || []); }
-    catch { setCourts([]); setLoadError('No se pudieron cargar las pistas'); }
-    finally { setLoading(false); }
-  }, [clubId]);
-
-  useEffect(() => { load(); }, [load]);
-
-  const openNew = () => { setForm({ name: '', alias: '' }); setErr(''); setEditingId('new'); };
-  const openEdit = (c) => { setForm({ name: c.name, alias: c.alias || '' }); setErr(''); setEditingId(c.id); };
-  const cancel = () => { setEditingId(null); setErr(''); };
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    if (!form.name.trim()) { setErr('El nombre es obligatorio'); return; }
-    setSaving(true); setErr('');
-    try {
-      if (editingId === 'new') {
-        const r = await clubService.createCourt(clubId, form);
-        setCourts(cs => [...cs, r.data]);
-      } else {
-        const r = await clubService.updateCourt(clubId, editingId, form);
-        setCourts(cs => cs.map(c => c.id === editingId ? r.data : c));
-      }
-      setEditingId(null);
-    } catch (ex) {
-      setErr(ex.response?.data?.error || 'Error al guardar');
-    } finally { setSaving(false); }
-  };
-
-  const handleToggle = async (court) => {
-    try {
-      const r = await clubService.updateCourt(clubId, court.id, { isActive: !court.isActive });
-      setCourts(cs => cs.map(c => c.id === court.id ? r.data : c));
-    } catch { /* ignore */ }
-  };
-
-  const confirmDelete = async () => {
-    await clubService.deleteCourt(clubId, deleteTarget.id);
-    setCourts(cs => cs.filter(c => c.id !== deleteTarget.id));
-    setDeleteTarget(null);
-  };
-
-  if (loading) return <div style={{ padding: '12px 0', fontSize: 12, color: 'var(--ink-soft)' }}>Cargando pistas…</div>;
-  if (loadError) return <div style={{ padding: '12px 0', fontSize: 12, color: 'var(--crimson)' }}>{loadError}</div>;
-
-  return (
-    <div style={{ marginTop: 14 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Pistas ({(courts || []).length})
-        </div>
-        <button onClick={openNew}
-          style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 10px',
-            borderRadius: 8, border: '1px dashed var(--court)', background: 'var(--court-soft)',
-            color: 'var(--court-deep)', fontWeight: 600, fontSize: 11, cursor: 'pointer' }}>
-          <PlusIcon style={{ width: 12, height: 12 }} /> Nueva pista
-        </button>
-      </div>
-
-      {/* Form inline */}
-      {editingId && (
-        <form onSubmit={handleSave}
-          style={{ background: 'var(--bone-2)', borderRadius: 10, border: '1px solid var(--court-soft)',
-            padding: '12px 14px', marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--ink)', marginBottom: 2 }}>
-            {editingId === 'new' ? 'Nueva pista' : 'Editar pista'}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            <div>
-              <label style={label11}>NOMBRE *</label>
-              <input style={inp} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="Pista 1" autoFocus />
-            </div>
-            <div>
-              <label style={label11}>ALIAS (opcional)</label>
-              <input style={inp} value={form.alias} onChange={e => setForm(f => ({ ...f, alias: e.target.value }))}
-                placeholder="La Central" />
-            </div>
-          </div>
-          {err && <div style={{ fontSize: 11, color: 'var(--crimson)', background: 'var(--crimson-soft)', borderRadius: 6, padding: '6px 10px' }}>{err}</div>}
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button type="button" onClick={cancel} style={{ ...btnCancel, padding: '7px 0', fontSize: 12 }}>Cancelar</button>
-            <button type="submit" disabled={saving} style={{ ...btnPrimary(saving), padding: '7px 0', fontSize: 12 }}>
-              {saving ? 'Guardando…' : editingId === 'new' ? 'Crear' : 'Guardar'}
-            </button>
-          </div>
-        </form>
-      )}
-
-      {(courts || []).length === 0 && !editingId ? (
-        <div style={{ fontSize: 12, color: 'var(--ink-soft)', padding: '8px 0' }}>
-          Este club aún no tiene pistas registradas.
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {(courts || []).map(court => (
-            <div key={court.id} style={{ display: 'flex', alignItems: 'center', gap: 8,
-              padding: '7px 10px', background: court.isActive ? 'var(--bone-2)' : 'var(--bone-3)',
-              borderRadius: 8, opacity: court.isActive ? 1 : 0.65 }}>
-              <MapPinIcon style={{ width: 14, height: 14, color: 'var(--court-deep)', flexShrink: 0 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{court.name}</span>
-                {court.alias && (
-                  <span style={{ fontSize: 11, color: 'var(--ink-soft)', marginLeft: 6 }}>· {court.alias}</span>
-                )}
-              </div>
-              {!court.isActive && (
-                <span style={{ fontSize: 10, background: 'var(--crimson-soft)', color: 'var(--crimson)',
-                  borderRadius: 4, padding: '1px 6px', fontWeight: 700 }}>inactiva</span>
-              )}
-              <Switch checked={court.isActive} onChange={() => handleToggle(court)}
-                label={court.isActive ? `Desactivar pista ${court.name}` : `Activar pista ${court.name}`} />
-              <button onClick={() => openEdit(court)} title="Editar"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-soft)', padding: 3, flexShrink: 0 }}>
-                <PencilSquareIcon style={{ width: 13, height: 13 }} />
-              </button>
-              <button onClick={() => setDeleteTarget(court)} title="Eliminar pista"
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--crimson)', padding: 3, flexShrink: 0 }}>
-                <XMarkIcon style={{ width: 13, height: 13 }} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {deleteTarget && (
-        <ConfirmModal
-          title="Eliminar pista"
-          message={`¿Eliminar la pista "${deleteTarget.name}"? Se desvinculará de todos los partidos asociados.`}
-          confirmLabel="Eliminar pista"
-          onConfirm={confirmDelete}
-          onClose={() => setDeleteTarget(null)}
-        />
-      )}
-    </div>
-  );
-}
-
 // ── Club detail ──────────────────────────────────────────────────────────────
 function ClubDetail({ clubId, isSuperAdmin, onMembershipChange }) {
   const [detail, setDetail]       = useState(null);
@@ -547,7 +402,7 @@ function ClubDetail({ clubId, isSuperAdmin, onMembershipChange }) {
       )}
 
       {/* Courts */}
-      <CourtsPanel clubId={clubId} />
+      <ClubCourtsSection clubId={clubId} />
 
       {/* Separator */}
       <div style={{ height: 1, background: 'var(--line)', margin: '14px 0' }} />
@@ -611,6 +466,16 @@ function ClubDetail({ clubId, isSuperAdmin, onMembershipChange }) {
 function ClubCard({ club, isSuperAdmin, onUpdated, onDeleted }) {
   const [open, setOpen]           = useState(false);
   const [showDelete, setShowDelete] = useState(false);
+  const [showEdit, setShowEdit]   = useState(false);
+  const [preview, setPreview]     = useState(null);   // the public card, as players see it
+  const [previewErr, setPreviewErr] = useState('');
+
+  const openPreview = async (e) => {
+    const opener = e.currentTarget;   // focus goes back here when the sheet closes
+    setPreviewErr('');
+    try { setPreview({ card: (await clubService.card(club.id)).data, opener }); }
+    catch { setPreviewErr('No se pudo cargar la ficha pública.'); }
+  };
 
   return (
     <div style={{ background: 'var(--paper)', borderRadius: 16, border: '1px solid var(--line)', overflow: 'hidden', marginBottom: 12 }}>
@@ -627,6 +492,22 @@ function ClubCard({ club, isSuperAdmin, onUpdated, onDeleted }) {
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>{club.name}</div>
             <div style={{ fontSize: 11, color: 'var(--ink-soft)' }}>/{club.slug}</div>
+            {club.description && (
+              <div style={{ fontSize: 12, color: 'var(--ink-mid)', marginTop: 4, lineHeight: 1.35 }}>{club.description}</div>
+            )}
+            {(club.address || club.city) && <div style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 3 }}>{[club.address, club.city].filter(Boolean).join(', ')}</div>}
+            {club.services?.length > 0 && <div style={{ marginTop: 8 }}><ServiceList keys={club.services} max={6} /></div>}
+            {club.profile && club.profile.percent < 100 && (
+              <div style={{ marginTop: 8 }} title={`Falta: ${club.profile.missing.join(', ')}`}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ flex: 1, maxWidth: 160, height: 5, borderRadius: 3, background: 'var(--bone-3)', overflow: 'hidden' }}>
+                    <div style={{ width: `${club.profile.percent}%`, height: '100%', background: 'var(--court)' }} />
+                  </div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--ink-soft)' }}>Perfil {club.profile.percent}%</span>
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--ink-soft)', marginTop: 2 }}>Falta: {club.profile.missing.slice(0, 3).join(', ')}{club.profile.missing.length > 3 ? '…' : ''}</div>
+              </div>
+            )}
           </div>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
             <div style={{ textAlign: 'center' }}>
@@ -642,6 +523,17 @@ function ClubCard({ club, isSuperAdmin, onUpdated, onDeleted }) {
               : <ChevronDownIcon style={{ width: 18, height: 18, color: 'var(--ink-soft)' }} />}
           </div>
         </button>
+        <button onClick={openPreview} title="Ver ficha pública" aria-label="Ver ficha pública"
+          style={{ padding: '14px 14px', background: 'none', border: 'none', cursor: 'pointer',
+            color: 'var(--ink-soft)', borderLeft: '1px solid var(--line)', flexShrink: 0 }}>
+          <EyeIcon style={{ width: 17, height: 17 }} />
+        </button>
+        {/* The list is already scoped: a club admin only sees their own club(s). */}
+        <button onClick={() => setShowEdit(true)} title="Editar club"
+          style={{ padding: '14px 14px', background: 'none', border: 'none', cursor: 'pointer',
+            color: 'var(--ink-soft)', borderLeft: '1px solid var(--line)', flexShrink: 0 }}>
+          <PencilSquareIcon style={{ width: 17, height: 17 }} />
+        </button>
         {isSuperAdmin && (
           <button onClick={() => setShowDelete(true)} title="Eliminar club"
             style={{ padding: '14px 14px', background: 'none', border: 'none', cursor: 'pointer',
@@ -656,6 +548,13 @@ function ClubCard({ club, isSuperAdmin, onUpdated, onDeleted }) {
           <div style={{ height: 1, background: 'var(--line)' }} />
           <ClubDetail clubId={club.id} isSuperAdmin={isSuperAdmin} onMembershipChange={onUpdated} />
         </>
+      )}
+
+      {previewErr && <div role="alert" style={{ padding: '0 16px 10px', fontSize: 12, color: 'var(--crimson)' }}>{previewErr}</div>}
+      {preview && <ClubDetailModal club={preview.card} returnFocusTo={preview.opener} onClose={() => setPreview(null)} />}
+
+      {showEdit && (
+        <EditClubModal club={club} canEditIdentity={isSuperAdmin} onClose={() => setShowEdit(false)} onChanged={onUpdated} />
       )}
 
       {showDelete && (
@@ -864,6 +763,7 @@ export default function Clubs() {
             {q ? `${filtered.length} de ${clubs.length}` : clubs.length} club{clubs.length !== 1 ? 's' : ''} registrado{clubs.length !== 1 ? 's' : ''}
           </div>
         </div>
+        <Link to="/club-directory" style={{ fontSize: 12, fontWeight: 700, color: 'var(--court-deep)', textDecoration: 'none', marginRight: 12, alignSelf: 'center' }}>Ver directorio →</Link>
         {sa && (
           <button onClick={() => setShowCreate(true)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '9px 16px', borderRadius: 12,

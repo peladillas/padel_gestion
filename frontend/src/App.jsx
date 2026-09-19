@@ -14,6 +14,7 @@ import Players from './pages/Players';
 import TournamentEngineAdmin from './pages/TournamentEngineAdmin';
 import TournamentView from './pages/TournamentView';
 import Clubs from './pages/Clubs';
+import ClubDirectory from './pages/ClubDirectory';
 import PublicProfile from './pages/PublicProfile';
 import JoinPage from './pages/JoinPage';
 import VerifyEmail from './pages/VerifyEmail';
@@ -73,6 +74,7 @@ export default function App() {
         <Route path="notifications" element={<Notifications />} />
         <Route path="messages"      element={<Messages />} />
         <Route path="players"      element={<Players />} />
+        <Route path="club-directory" element={<ClubDirectory />} />
         <Route path="tournaments/:id/view" element={<TournamentView />} />
         {/* Admin-only routes */}
         <Route path="tournament-instances" element={<AdminRoute><TournamentEngineAdmin /></AdminRoute>} />

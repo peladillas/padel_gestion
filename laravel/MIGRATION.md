@@ -593,3 +593,104 @@ Hacía cosas parecidas a Ajustes pero no permitía rehacer parejas. Se borró el
 
 ### Verificación
 166 tests de backend. Renderizado en servidor de `ValorationForm` (nombres, fotos, etiquetas, 8 sliders con máximo 5, sin restos de "/10") y de `SettingsTab`; utilidad verificada con Node; recorrido de punta a punta por el proxy de Vite contra los servidores reales (con datos desechables, ya borrados). **Sigue sin probarse el arrastre real del slider en un navegador** (el primer toque en un slider sin valorar lo fija en 3 y el resto del arrastre lo ajusta).
+
+---
+
+## 26. Perfil del club: editar info, foto, descripción y servicios
+
+Petición: que los clubs se puedan editar (ABM) **manteniendo su id**, con foto de perfil, una descripción corta que rellena el admin del club y un conjunto de servicios.
+
+### El id no cambia
+`Club.id` es un UUID que ninguna edición toca; torneos, socios, pistas y códigos de invitación apuntan a él, así que renombrar un club o cambiar su slug no rompe nada (test: tras renombrar, pistas/torneos/socios siguen enlazados).
+
+### Endurecimiento del `PUT /clubs/:id`
+Antes: un slug repetido reventaba con 500 (índice único), el slug no se normalizaba como en el alta (`Pádel` → `pdel`), un nombre vacío llegaba a la BD y un club inexistente daba un 404 en inglés. Ahora: el slug se normaliza con `Str::slug` (acentos plegados: `Pádel Ñoño` → `padel-nono`) tanto al crear como al editar, un slug ya usado por *otro* club es 409 (el propio no), nombre vacío o slug inservible es 400, y club inexistente es 404 con mensaje en español. `logoUrl` **ya no se acepta por URL** (evita logos apuntando a servidores externos); solo por subida.
+
+### Permisos: el admin del club edita el perfil de su club
+| Acción | Endpoint | Quién |
+|---|---|---|
+| Nombre y slug | `PUT /clubs/:id` | solo SUPER_ADMIN |
+| Descripción y servicios | `PUT /clubs/:id/profile` | admin de **ese** club o SUPER_ADMIN |
+| Foto | `POST/DELETE /clubs/:id/logo` | admin de **ese** club o SUPER_ADMIN |
+Un admin de otro club, un jugador o un anónimo reciben 403/401. La página `/clubs` ya estaba en el menú de los admins y `GET /clubs` ya filtra por club, así que un admin de club ve y edita solo el suyo.
+
+### Foto de perfil
+Se guarda como **PNG** (conserva transparencia) reducida para caber en 256×256 **sin recortar ni ampliar**; JPG/PNG/WebP hasta 5 MB. La URL lleva `?v=<timestamp>` porque Nginx cachea `/uploads` una semana. Borrar la foto o el club elimina el archivo.
+
+### Descripción corta
+Máximo **300 caracteres** (cuenta caracteres, no bytes); vacía = sin descripción. Enviar solo `services` no borra la descripción y viceversa.
+
+### Servicios (catálogo cerrado)
+`App\Support\ClubServiceCatalog`: 25 servicios en 4 grupos, elegidos entre lo que los clubs de pádel anuncian con más frecuencia según una búsqueda web (Book & Go, PSF Collective, Premidel, PadelDen, Padel Business Magazine…): **Instalaciones** (pistas cubiertas, panorámicas, iluminación nocturna, climatización, vestuarios y duchas, taquillas, parking, acceso para movilidad reducida, Wi-Fi), **Pádel** (reserva online, alquiler de palas y pelotas, tienda, clases y entrenadores, escuela infantil, torneos y ligas, partidos abiertos), **Comida y ocio** (bar/cafetería, restaurante, terraza/zona social, eventos) y **Bienestar y extras** (gimnasio, piscina, spa/sauna, fisioterapia y masajes, otros deportes). Es una lista cerrada (no texto libre) para poder listar y filtrar de forma coherente y evitar duplicados por erratas; se guarda en `Club.services` (jsonb, migración `2026_09_19_000003`) como lista de claves, sin duplicados y en el orden del catálogo. Una clave desconocida es 400. `GET /clubs/services` publica el catálogo (etiquetas y grupos en el backend; solo los iconos son cosa del frontend). `GET /clubs/public` incluye ahora descripción, foto y servicios.
+
+### Frontend
+`EditClubModal` (foto con subir/cambiar/quitar —se guarda al elegirla—, nombre y slug solo para super admin, descripción con contador, selector de servicios agrupado con iconos Heroicons); botón ✏️ en cada tarjeta de `/clubs`; la tarjeta muestra descripción y hasta 6 servicios (+N).
+
+### Verificación
+185 tests (19 nuevos en `ClubProfileTest`); render en servidor de la lista, el selector y el modal (incluido que un admin de club no ve nombre/slug); prueba de punta a punta por el proxy de Vite con un PNG real de 900×300 (subida → servido por `/uploads` con `nosniff` → 256×85 → borrado → 404) y con cuentas de super admin, admin del club, admin de otro club y jugador. **Sigue sin probarse en un navegador real** (el selector de archivos y el aspecto del modal).
+
+---
+
+## 27. Tarjeta del club y directorio para todos los roles
+
+Petición: una tarjeta de club (información, dirección, teléfonos, servicios…), un directorio consultable por **todos los roles** con búsqueda, orden y filtros (servicios, cercanía, días abiertos, etc.), y que **toda la info que falte se pueda rellenar en el perfil del club por su admin**.
+
+### Datos nuevos del perfil (migración `2026_09_20_000001`)
+Todos opcionales, rellenados por el admin del club (o un super admin) con `PUT /clubs/:id/profile`:
+- **Ubicación**: `address`, `city`, `region`, `postalCode`, `country` (ISO 2 letras), `latitude`/`longitude` (van juntas o ninguna; `CHECK` en BD: lat ±90, lng ±180).
+- **Contacto**: `phones` (hasta 4, `{label, number}`; 6–15 dígitos), `email`, `website`, `bookingUrl` (botón "Reservar"), `instagram`, `facebook` (se guarda solo el usuario; acepta `@usuario` o el enlace del perfil).
+- **Horario**: `openingHours` por día (`mon…sun`, `{open, close}` en 24 h o `null` = cerrado). Cerrar antes de abrir = cierra pasada la medianoche (18:00–02:00); `00:00` de cierre se guarda como `24:00`. `timezone` (IANA) para saber si está abierto *ahora*.
+- **Precio**: `priceFrom`/`priceTo` (precio de la pista por hora, opcional) y `currency`.
+- Ya existían: foto, descripción (≤300), servicios (catálogo cerrado, §26). Las pistas activas se cuentan solas (`courtsCount`).
+
+Toda la validación vive en `App\Support\ClubProfileRules` (una sola vez para crear, editar y "editar mi club"); un valor inválido en cualquier campo es 400 con el campo nombrado y no se guarda nada; enviar solo algunos campos no borra el resto; `null`/vacío limpia. **Seguridad**: las URLs solo admiten http(s) (`javascript:`, `ftp:` y compañía se rechazan; `club.com` pasa a `https://club.com`), sin espacios; el email se normaliza a minúsculas. `ClubProfileRules::completeness()` da el % de perfil completo y qué falta; `GET /clubs` lo incluye como `profile` y la página de gestión lo muestra ("Perfil 62% · Falta: Teléfono, Horario…").
+
+### Directorio: `GET /api/clubs/directory` (cualquier usuario autenticado; anónimos 401)
+Parámetros: `q` (busca por palabras, **sin distinguir acentos ni mayúsculas**, en nombre/ciudad/dirección/descripción; "padel madrid" encuentra "Pádel Norte" en Madrid; `%`/`_` son texto literal), `services` (lista o `a,b`) con `servicesMode=all|any`, `city`, `country`, `openDays=sat,sun` (el club debe publicar horario todos esos días), `openNow=1`, `minCourts`, `maxPrice`, `lat`+`lng` (posición del usuario → `distanceKm` en cada tarjeta), `radiusKm`, `sort=name|distance|courts|price|services` + `dir=desc`, `page`, `perPage` (12, máx. 50). Parámetro inválido = 400 (no 500). Respuesta `{data: [tarjeta…], meta: {total, page, perPage, lastPage, sort, availableCities}}`; `GET /clubs/directory/:id` devuelve una tarjeta (con distancia si se pasa lat/lng).
+- La **tarjeta** solo lleva datos públicos (nunca `allowedStructures` ni otros internos).
+- **"Abierto ahora"** se calcula en la zona horaria *del club* (o `CLUB_TIMEZONE`, por defecto `Europe/Madrid`, si no la puso), incluye el tramo que cruza medianoche y devuelve `null` —desconocido, no "cerrado"— si el club no publicó horario (y por eso `openNow=1`/`openDays` lo excluyen).
+- Los clubs sin coordenadas van **al final** al ordenar por cercanía y se excluyen con `radiusKm`; sin precio, al final al ordenar por precio.
+- **Decisión**: filtrado y orden se hacen en PHP sobre los clubs cargados (no en SQL) porque la búsqueda debe ignorar acentos, "abierto ahora" depende de la zona horaria de cada club y la distancia de cada usuario. Un directorio de clubs es pequeño (cientos); si llegara a decenas de miles habría que mover distancia/servicios/ciudad a SQL.
+
+### Frontend
+- **Tarjeta resumen + ficha en modal.** `ClubInfoCard` es un resumen clicable (logo, nombre, dirección, distancia, pastilla abierto/cerrado, descripción a 2 líneas, nº de pistas, precio y los primeros servicios). Al hacer clic —o con Enter/Espacio— abre `ClubDetailModal` con **toda la información pública y de contacto**: descripción, todos los servicios, dirección con "Cómo llegar", horario de los 7 días con **hoy** resaltado (según la zona horaria del club) y contacto: **Reservar**, un enlace `tel:` por teléfono con su etiqueta, email, web, Instagram y Facebook. Los datos de contacto y el horario completo están *solo* en el modal: una tarjeta clicable no puede contener enlaces o botones sin anidar elementos interactivos (rompe teclado y lectores de pantalla), así que la tarjeta no lleva ninguno.
+- **Accesibilidad del modal** (`hooks/useModalA11y`): `role="dialog"` + `aria-modal` + `aria-labelledby` (nombre del club); el foco entra en el diálogo (botón Cerrar) y **Tab/Shift+Tab no se salen**; Escape, clic en el fondo y ✕ lo cierran; la página de detrás no hace scroll; al cerrar el foco **vuelve a la tarjeta** que lo abrió (la tarjeta pasa su propio elemento: Safari no da foco al hacer clic, así que no se puede confiar en `document.activeElement`).
+- **Vista previa para el admin**: en la gestión de clubs, el botón 👁 "Ver ficha pública" abre la misma ficha tal como la ven los jugadores (`GET /clubs/directory/:id`), para comprobar qué ha rellenado.
+- `ClubDirectory` (`/club-directory`): buscador, "Cerca de mí" (geolocalización del navegador → ordena por cercanía y activa el radio), "Abierto ahora", panel de filtros (ciudad, pistas, distancia, días, servicios todos/alguno), orden, paginación, estados de carga/error/vacío. Búsqueda con debounce y peticiones anteriores canceladas.
+- `EditClubModal` con pestañas **General** (foto, nombre/slug solo super admin, descripción, precio), **Contacto** (teléfonos con etiqueta, email, web, reservas, redes), **Ubicación** (dirección, "Usar mi ubicación actual", enlace al mapa, zona horaria —por defecto la del dispositivo del admin—), **Horario** (un selector por día, "copiar a toda la semana") y **Servicios**.
+- Accesos: menú lateral de escritorio (jugadores), Perfil → "Explorar todos los clubs", y "Ver directorio" en la gestión de clubs. **No** se añadió una novena pestaña a la barra móvil de los jugadores: es una rejilla fija de 6 columnas y ya tienen más pestañas de las que caben.
+
+### Verificación
+263 tests de backend (78 nuevos: 27 valores inválidos, permisos, directorio, horarios por zona horaria y tramos nocturnos, distancia con el valor conocido Madrid–Barcelona ≈ 505 km, orden, paginación); render en servidor de la tarjeta (con datos completos, cerrado, sin horario y casi vacía) y de cada pestaña del modal; utilidades verificadas con Node; y 36 comprobaciones de punta a punta por el proxy de Vite con cuentas de super admin, admin de club y jugador (datos ya borrados). La interacción de la tarjeta/modal se probó montando la página **real** (`ClubDirectory` y `Clubs`) con React en un DOM simulado (jsdom) contra el backend en marcha: 50 comprobaciones de clic, teclado, foco, Tab atrapado, Escape, fondo, ✕, scroll bloqueado, enlaces `tel:`/`mailto:` y foco de vuelta. **No se ha probado en un navegador real**: el aspecto visual, "Cerca de mí" (pide permiso de ubicación) y el selector de horas.
+
+---
+
+## 28. Gestión de pistas dentro de cada club + calendario de bloqueos
+
+Petición: dentro de cada club, gestionar las pistas (cuántas, material, orientación, piso, paredes, estado) y un calendario de bloqueos por mantenimiento, etc., que sirva de restricciones para las reservas.
+
+> **Aún no existe un sistema de reservas** (solo el servicio "reserva online" y el enlace `bookingUrl` del perfil). Lo construido es la mitad que le corresponde a esta petición: las pistas, los bloqueos y **un servicio de disponibilidad probado** (`CourtAvailabilityService`) que las reservas tendrán que consultar. Cuando se implementen, deben llamarlo **dentro de la misma transacción que crea la reserva** (con bloqueo de fila sobre la pista) para no reservar en el hueco entre la comprobación y el guardado.
+
+### Permisos: hueco de seguridad cerrado
+Las rutas de pistas solo exigían ser admin de *algún* club: **cualquier admin podía crear, editar o borrar pistas de otro club** (heredado del port de Express). Ahora toda escritura y lectura de gestión (`/courts`, `/courts/bulk`, `/court-blocks`) exige ser admin **de ese club** o super admin (`ClubService::assertCanManage`, el mismo que el perfil). Un admin de otro club, un jugador y un anónimo reciben 403/401. Solo el catálogo y la disponibilidad están abiertos a cualquier usuario autenticado.
+
+### La pista (migración `2026_09_21_000001`)
+Cada pista describe su **material de estructura** (acero galvanizado, aluminio, hormigón, madera…), **piso** (césped artificial, cemento, moqueta sintética, arcilla…), **paredes** (cristal templado, muro, mixtas, malla…), **orientación** del eje largo (N–S, E–O, NE–SO, NO–SE), **tipo** (exterior, cubierta, interior), **iluminación**, **notas internas** (≤200; nunca salen a los jugadores) y **estado** (`operational` / `maintenance` / `closed`). Los vocabularios son cerrados (`App\Support\CourtCatalog`, publicados en `GET /clubs/court-catalog`); un valor fuera del catálogo es 400 y en blanco limpia el campo. `isActive` se mantiene (lo leen el motor de torneos y el directorio) **sincronizado**: `isActive = (status = operational)`; enviar el interruptor viejo `isActive:false` equivale a `closed`, y si llegan ambos manda `status`. Las pistas apagadas antes de la migración pasan a `closed`. Un `CHECK` de BD impide estados inventados. El modelo declara los mismos valores por defecto que la BD (una pista recién creada en memoria ya es `operational`, no `null`).
+- **Cuántas**: `POST /clubs/:id/courts/bulk` `{count 1–30, namePrefix, startNumber, + características}` crea "Pista 1…N" iguales en una transacción, **saltándose nombres ya usados** (nunca duplica ni pisa). Orden natural en los listados ("Pista 2" antes que "Pista 10").
+- La ficha pública del club (`courts` en la tarjeta del directorio y sección "Las pistas" del modal) muestra la descripción y el estado de cada pista, oculta las `closed` y nunca las notas.
+
+### Calendario de bloqueos (`CourtBlock`)
+Periodos en que una pista no se puede usar. Motivos: mantenimiento, limpieza, reparación, obras, evento privado, torneo, clases, meteorología, otro. `POST /clubs/:id/court-blocks` acepta **varias pistas** (`courtIds`) o `allCourts`, y **repetición semanal** (`repeat:{type:'weekly', until}`, máx. 104 semanas; se rechaza en vez de truncar en silencio). Todo lo creado en una petición comparte `groupId`. `GET` lista los bloqueos que se solapan con un rango de fechas; `PUT` edita uno; `DELETE ?scope=` elimina `one` / `occurrence` (todas las pistas, ese horario) / `following` (ese y los siguientes) / `all` (toda la serie).
+- **Zona horaria**: el admin trabaja en la hora del club. Las cadenas sin offset se leen en la zona del club; con offset o `Z` se respetan. Se guarda un instante UTC y **cada respuesta devuelve también las horas locales** (`startLocal`/`endLocal`), así que la interfaz nunca hace cálculos de zona. La repetición semanal **mantiene la hora local a través del cambio de hora de verano** (test: domingo 18 y 25 de octubre de 2026 a las 10:00 locales = 08:00Z y 09:00Z).
+- **Bug real encontrado por los tests**: `09:00` de Madrid se guardaba como `05:00Z` en vez de `07:00Z`. Carbon convertía bien a UTC, pero Postgres interpreta un `timestamptz` escrito **sin offset** en la zona de *su sesión* —que depende del servidor: aquí Madrid, en Docker UTC— así que el mismo código guardaba instantes distintos según la máquina. Corregido fijando `'timezone' => 'UTC'` en la conexión `pgsql` (`config/database.php`); afecta a toda la app, y la suite completa sigue en verde.
+
+### Disponibilidad (`CourtAvailabilityService`, `GET /clubs/directory/:id/availability?start&end`)
+Combina todas las restricciones en una sola pregunta —"¿se puede usar esta pista entre estos instantes?"— con razones: `court_not_operational`, `blocked` y `outside_opening_hours` (el tramo debe caber en un tramo de apertura publicado, incluidos horarios que cruzan medianoche y tramos contiguos `…–24:00` + `00:00–…`; un club **sin horario publicado no queda restringido**: desconocido ≠ cerrado). Los periodos son semiabiertos: terminar justo cuando empieza un bloqueo no se solapa. Cualquier rol puede consultarlo, pero la respuesta pública solo dice *si* y un código genérico: **nunca el motivo ni la nota del bloqueo**. Tramo máximo: 168 h.
+- **No cubierto todavía**: la asignación de pistas a partidos de torneo (`TournamentService::assignCourts`) descarta las pistas no operativas, pero **no consulta los bloqueos**, porque los partidos se generan sin hora (`scheduledAt` es nulo); cuando los partidos tengan hora, debe llamar a este servicio.
+- Editar un bloqueo en la interfaz tampoco está (la API sí): se borra y se vuelve a crear.
+
+### Frontend
+Dentro de cada club (gestión de clubs → tarjeta desplegada): `CourtsManager` (lista con la descripción de cada pista, resumen "3 pistas · 1 operativa · 1 en mantenimiento…", cambio rápido de estado, editar con todos los campos, "Crear varias" con plantilla y confirmación al eliminar) y `CourtBlocksCalendar` (mes en rejilla lunes-primero con un punto de color por motivo y `aria-label` "jueves 1 de octubre: 2 bloqueos", panel del día con los bloqueos de varias pistas **agrupados en una fila**, "Nuevo bloqueo" con pistas / desde-hasta / motivo / nota / repetición semanal, y borrado que solo ofrece los ámbitos que tienen sentido). Los diálogos usan `useModalA11y` (foco, Tab atrapado, Escape). El botón 👁 "Ver ficha pública" y el modal del directorio muestran las pistas.
+
+### Verificación
+387 tests de backend (114 nuevos: permisos por club, catálogo, alta múltiple, sincronía de estado, calendario —zona horaria, semanas, horario de verano, alcances de borrado, aislamiento entre clubs— y disponibilidad —semiabierto, horarios nocturnos, zonas horarias, razones, privacidad—); utilidades del calendario verificadas con Node; y **37 comprobaciones de interacción** montando la página real en un DOM simulado contra el backend en marcha (crear 3 pistas con plantilla → editar una → cambiar estados → bloquear las 3 con repetición semanal → ver una fila agrupada → consultar la disponibilidad como jugador → borrar "este y los siguientes" → ver la ficha pública → borrar una pista y comprobar que sus bloqueos desaparecen). **No se ha probado en un navegador real**: el aspecto visual, los selectores nativos de fecha y hora (`datetime-local`) y la usabilidad del calendario en móvil.

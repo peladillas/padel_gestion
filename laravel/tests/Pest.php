@@ -94,3 +94,18 @@ function parityMatch(\App\Models\TournamentInstance $t, array $team1, array $tea
         'group' => json_encode(['team1' => array_map(fn ($p) => $p->id, $team1), 'team2' => array_map(fn ($p) => $p->id, $team2)]),
     ]);
 }
+
+// ── Club helpers shared by the club test files ──────────────────────────
+
+function clubAdminOf(\App\Models\Club $club, string $email): \App\Models\User
+{
+    [$user, $player] = parityUser($email, \App\Enums\Role::ADMIN);
+    \App\Models\ClubMembership::create(['clubId' => $club->id, 'playerId' => $player->id, 'role' => \App\Enums\ClubRole::ADMIN, 'status' => 'active']);
+
+    return $user;
+}
+
+function newClub(string $name = 'Club Test', ?string $slug = null): \App\Models\Club
+{
+    return \App\Models\Club::create(['name' => $name, 'slug' => $slug ?? \Illuminate\Support\Str::slug($name).'-'.uniqid()]);
+}

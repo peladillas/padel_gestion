@@ -510,3 +510,8 @@ input::placeholder, textarea::placeholder { color: var(--bp-text-3); }
   .stats-left > div:first-child { width: 280px; max-width: 100%; }
   .stats-right { width: 100%; }
 }
+
+/* ── club/ClubInfoCard (clickable summary that opens the club's sheet) ── */
+.bp-club-card { transition: border-color .15s, box-shadow .15s; }
+.bp-club-card:hover { border-color: var(--court); box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.bp-club-card:focus-visible { outline: 2px solid var(--court); outline-offset: 2px; }

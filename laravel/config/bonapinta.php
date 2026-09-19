@@ -9,6 +9,9 @@ return [
 
     'frontend_url' => env('FRONTEND_URL', 'https://bonapinta.com'),
 
+    // Timezone used to work out "open now" for clubs that haven't set their own.
+    'default_timezone' => env('CLUB_TIMEZONE', 'Europe/Madrid'),
+
     // Rate limiting is on everywhere except APP_ENV=local unless overridden.
     'rate_limits_enabled' => filter_var(env('RATE_LIMITS_ENABLED', env('APP_ENV') !== 'local'), FILTER_VALIDATE_BOOLEAN),
 

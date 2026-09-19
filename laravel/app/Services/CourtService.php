@@ -5,47 +5,108 @@ namespace App\Services;
 use App\Exceptions\ApiException;
 use App\Models\Court;
 use App\Models\TournamentCourt;
+use App\Support\CourtRules;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Direct port of backend/src/services/CourtService.js.
+ * A club's courts (with their physical description and operational status) and
+ * the courts a tournament plays on. The court CRUD started as a port of
+ * backend/src/services/CourtService.js.
  */
 class CourtService
 {
+    public const BULK_MAX = 30;
+
     protected static function error(string $message, int $status): ApiException
     {
         return new ApiException($message, $status);
     }
 
-    /** @return array<int, Court> */
+    /** @return array<int, Court> operational first, then by name in natural order ("Pista 2" before "Pista 10") */
     public function list(string $clubId): array
     {
         return Court::where('clubId', $clubId)
-            ->orderByDesc('isActive')
-            ->orderBy('name')
             ->get()
+            ->sortBy([
+                fn ($a, $b) => (int) $b->isActive <=> (int) $a->isActive,
+                fn ($a, $b) => strnatcasecmp($a->name, $b->name),
+            ])
+            ->values()
             ->all();
+    }
+
+    protected function assertNameFree(string $clubId, string $name, ?string $exceptCourtId = null): void
+    {
+        $taken = Court::where('clubId', $clubId)->where('name', $name)
+            ->when($exceptCourtId, fn ($q) => $q->where('id', '!=', $exceptCourtId))
+            ->exists();
+
+        if ($taken) {
+            throw self::error('Ya existe una pista con ese nombre en este club', 409);
+        }
     }
 
     public function create(string $clubId, array $data): Court
     {
-        $name = trim($data['name'] ?? '');
+        $clean = CourtRules::clean($data);
 
-        if (! $name) {
+        if (empty($clean['name'])) {
             throw self::error('El nombre es requerido', 400);
         }
 
-        $existing = Court::where('clubId', $clubId)->where('name', $name)->first();
+        $this->assertNameFree($clubId, $clean['name']);
 
-        if ($existing) {
-            throw self::error('Ya existe una pista con ese nombre en este club', 409);
+        return Court::create(array_merge(
+            ['clubId' => $clubId, 'status' => 'operational', 'isActive' => true, 'hasLighting' => false],
+            $clean,
+        ));
+    }
+
+    /**
+     * "Define how many courts": creates `count` courts named "<prefix> <n>"
+     * that share the same characteristics (floor, walls, orientation…).
+     * Names already taken are skipped, never duplicated or overwritten.
+     *
+     * @return array<int, Court>
+     */
+    public function createMany(string $clubId, array $data): array
+    {
+        $count = $data['count'] ?? null;
+
+        if (! is_numeric($count) || (int) $count != $count || $count < 1 || $count > self::BULK_MAX) {
+            throw self::error('count debe ser un número entero de 1 a '.self::BULK_MAX, 400);
         }
 
-        return Court::create([
-            'clubId' => $clubId,
-            'name' => $name,
-            'alias' => trim($data['alias'] ?? '') ?: null,
-        ]);
+        $prefix = trim((string) ($data['namePrefix'] ?? 'Pista'));
+
+        if ($prefix === '' || mb_strlen($prefix) > 50) {
+            throw self::error('El prefijo del nombre es obligatorio (máx. 50 caracteres)', 400);
+        }
+
+        $number = max((int) ($data['startNumber'] ?? 1), 1);
+        $template = CourtRules::clean(array_intersect_key($data, array_flip(CourtRules::TEMPLATE_FIELDS)));
+
+        return DB::transaction(function () use ($clubId, $count, $prefix, $number, $template) {
+            $existing = Court::where('clubId', $clubId)->pluck('name')->flip();
+            $created = [];
+
+            while (count($created) < (int) $count) {
+                $name = "{$prefix} {$number}";
+                $number++;
+
+                if ($existing->has($name)) {
+                    continue;
+                }
+
+                $created[] = Court::create(array_merge(
+                    ['clubId' => $clubId, 'status' => 'operational', 'isActive' => true, 'hasLighting' => false],
+                    $template,
+                    ['name' => $name],
+                ));
+            }
+
+            return $created;
+        });
     }
 
     public function update(string $courtId, string $clubId, array $data): Court
@@ -56,29 +117,13 @@ class CourtService
             throw self::error('Pista no encontrada', 404);
         }
 
-        $name = isset($data['name']) ? trim($data['name']) : null;
+        $clean = CourtRules::clean($data);
 
-        if ($name && $name !== $court->name) {
-            $dup = Court::where('clubId', $clubId)->where('name', $name)->first();
-
-            if ($dup) {
-                throw self::error('Ya existe una pista con ese nombre en este club', 409);
-            }
+        if (isset($clean['name']) && $clean['name'] !== $court->name) {
+            $this->assertNameFree($clubId, $clean['name'], $court->id);
         }
 
-        if (array_key_exists('name', $data)) {
-            $court->name = $name;
-        }
-
-        if (array_key_exists('alias', $data)) {
-            $court->alias = trim($data['alias'] ?? '') ?: null;
-        }
-
-        if (array_key_exists('isActive', $data)) {
-            $court->isActive = (bool) $data['isActive'];
-        }
-
-        $court->save();
+        $court->fill($clean)->save();
 
         return $court;
     }

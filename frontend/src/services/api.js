@@ -127,6 +127,25 @@ export const clubService = {
   updateCourt:  (id, cId, data) => api.put(`/clubs/${id}/courts/${cId}`, data),
   deleteCourt:          (id, cId)       => api.delete(`/clubs/${id}/courts/${cId}`),
   updateTournamentTypes:(id, data)      => api.put(`/clubs/${id}/tournament-types`, data),
+  // Club profile: the club's own admin edits these (name/slug stay super-admin only, via update()).
+  getServiceCatalog:    ()              => api.get('/clubs/services'),
+  // Directory open to every role: params = q, services, servicesMode, city, country, openDays, openNow,
+  // minCourts, maxPrice, lat, lng, radiusKm, sort, dir, page, perPage (see ClubDirectoryService).
+  directory:            (params, signal) => api.get('/clubs/directory', { params, signal }),
+  card:                 (id, params)    => api.get(`/clubs/directory/${id}`, { params }),
+  updateProfile:        (id, data)      => api.put(`/clubs/${id}/profile`, data),
+  // Court management (a club's own admin): description of each court, bulk creation and the block calendar.
+  getCourtCatalog:      ()              => api.get('/clubs/court-catalog'),
+  createCourts:         (id, data)      => api.post(`/clubs/${id}/courts/bulk`, data),
+  getCourtBlocks:       (id, params)    => api.get(`/clubs/${id}/court-blocks`, { params }),
+  createCourtBlock:     (id, data)      => api.post(`/clubs/${id}/court-blocks`, data),
+  updateCourtBlock:     (id, blockId, data) => api.put(`/clubs/${id}/court-blocks/${blockId}`, data),
+  // scope: one | occurrence | following | all (see CourtBlockService::delete)
+  deleteCourtBlock:     (id, blockId, scope = 'one') => api.delete(`/clubs/${id}/court-blocks/${blockId}`, { params: { scope } }),
+  // Any role: which courts can be used in a slot — what a booking screen asks.
+  courtAvailability:    (id, params)    => api.get(`/clubs/directory/${id}/availability`, { params }),
+  uploadLogo:           (id, file)      => { const f = new FormData(); f.append('logo', file); return api.post(`/clubs/${id}/logo`, f, { headers: { 'Content-Type': 'multipart/form-data' } }); },
+  removeLogo:           (id)            => api.delete(`/clubs/${id}/logo`),
 };
 
 // Preset creation only — management UI was removed in favour of in-tournament "Guardar como preset"

@@ -97,6 +97,12 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Every session speaks UTC. A `timestamptz` written from a value with no
+            // offset ("2026-10-01 07:00:00") is read by Postgres in the SESSION's
+            // timezone, which is the server's own setting — so the same code stored
+            // different instants on a Madrid-configured server and a UTC one.
+            // Pinning the session makes writes and reads independent of the machine.
+            'timezone' => 'UTC',
         ],
 
         'sqlsrv' => [

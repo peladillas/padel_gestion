@@ -38,6 +38,9 @@ export default function Layout() {
     { to: '/valorations', Icon: StarIcon,     label: 'Valoraciones' },
     { to: '/standings',   Icon: TrophyIcon,   label: 'Torneos'      },
     { to: '/players',   Icon: UsersIcon,      label: 'Jugadores' },
+    // Desktop sidebar only: the mobile tab bar is a fixed 6-column grid and players already have more tabs than fit.
+    // On mobile the directory is reached from Perfil → "Mi club".
+    { to: '/club-directory', Icon: BuildingOffice2Icon, label: 'Clubs', desktopOnly: true },
     { to: '/profile',   Icon: UserCircleIcon, label: 'Perfil'    },
   ];
 
@@ -127,7 +130,7 @@ export default function Layout() {
 
         {/* ── MOBILE TAB BAR (all roles) — badges the Perfil tab since
             players have no mobile header to put the bell in ── */}
-        <MobileTabBar tabs={navItems} badges={(unreadCount > 0 || unreadMessages > 0) ? { '/profile': true } : {}} />
+        <MobileTabBar tabs={navItems.filter(i => !i.desktopOnly)} badges={(unreadCount > 0 || unreadMessages > 0) ? { '/profile': true } : {}} />
 
       </div>
     </>
